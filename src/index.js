@@ -1,15 +1,9 @@
 // Require the framework and instantiate it
 import Fastify from "fastify";
-import fastifyStatic from "@fastify/static";
 import fastifyCookie from "@fastify/cookie";
 import fastifySession from "@fastify/session";
-import apiRoutes from "./controllers/api.js";
-
-// Get the current directory path in ESM scope
-import { fileURLToPath } from "url";
-import path from "path";
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import staticController from "./controllers/static.js";
+import apiController from "./controllers/api.js";
 
 // Initialize Fastify server
 const server = Fastify({ logger: true });
@@ -24,8 +18,11 @@ server.register(fastifySession, {
     secure: process.env.COOKIE_SECURE === "true",
   },
 });
-server.register(fastifyStatic, { root: path.join(__dirname, "www") });
-server.register(apiRoutes, { prefix: "/api" });
+server.register(staticController);
+server.register(apiController, {
+  prefix: "/api",
+  apiEnv: { password: process.env.PASSWORD },
+});
 
 const start = async () => {
   try {
