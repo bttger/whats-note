@@ -40,7 +40,7 @@
           type="password"
           placeholder="Enter your password"
           x-model:value="password"
-          @keydown="if ($event.key === 'Enter') login(password)"
+          @keydown.enter="login(password)"
         />
       </label>
       <button @click="login(password)">Log In</button>
