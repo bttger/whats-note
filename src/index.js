@@ -21,7 +21,10 @@ server.register(fastifySession, {
 server.register(staticController);
 server.register(apiController, {
   prefix: "/api",
-  apiEnv: { password: process.env.PASSWORD },
+  apiEnv: {
+    password: process.env.PASSWORD,
+    pageSizeMessages: process.env.PAGE_SIZE || 50,
+  },
 });
 
 const start = async () => {

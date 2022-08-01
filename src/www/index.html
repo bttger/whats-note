@@ -5,12 +5,165 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/png" href="/images/NotoV1Memo_64x64.png" />
+    <link rel="stylesheet" href="/css/style.css" />
     <script
       defer
       src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"
     ></script>
+    <script>
+      function scrollIntoView(id) {
+        const elem = document.getElementById(id);
+        elem.scrollIntoView({ behavior: "smooth" });
+      }
+
+      function data() {
+        return {
+          async init() {
+            this.getMessages();
+            this.isLoadingPage = false;
+          },
+          isLoadingPage: true,
+          open: 0,
+          tabs: [0, 1, 2, 3, 4, 5],
+          messages: [],
+          notes: {},
+          messagesPage: 0,
+          openTab(id) {
+            this.isLoadingPage = true;
+            this.open = id;
+            if (this.open === 0) {
+              this.getMessages();
+            } else {
+              this.getNote(this.open);
+            }
+            this.isLoadingPage = false;
+          },
+          getMessages() {
+            // TODO
+
+            const lastId = "";
+            this.$nextTick(() => scrollIntoView(lastId));
+          },
+          postMessage(message) {
+            if (!message) return;
+            const id = crypto.randomUUID();
+            const body = {
+              id,
+              text: message,
+              sentAt: Date.now(),
+              checked: false,
+            };
+            this.messages.push(body);
+            this.$nextTick(() => scrollIntoView(id));
+            // TODO web storage queueing if request fails
+            fetch("/messages", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(body),
+            })
+              .then((response) => {
+                if (response.ok) {
+                  // Remove from storage queue
+                }
+              })
+              .catch();
+          },
+          deleteMessage(id) {
+            // TODO
+          },
+          checkOffMessage(id) {
+            // TODO
+          },
+          getNote(id) {
+            // TODO
+          },
+          putNote(id) {
+            // TODO
+          },
+        };
+      }
+    </script>
   </head>
-  <body>
-    <h1 x-data="{ message: 'Note Messenger' }" x-text="message"></h1>
+  <body x-data="data()">
+    <div class="container">
+      <!-- ------ TAB NAVIGATION ------ -->
+      <div class="tabs">
+        <template x-for="tab in tabs">
+          <div
+            x-text="tab"
+            class="button tab"
+            :class="tab === open && 'focused'"
+            @click="openTab(tab)"
+          ></div>
+        </template>
+      </div>
+      <!-- ------ PAGE LOADING ------ -->
+      <p
+        x-show="isLoadingPage"
+        style="margin-top: 50px; text-align: center; color: silver"
+      >
+        Loading...
+      </p>
+      <!-- ------ MESSENGER ------ -->
+      <div id="messages" class="filler-container">
+        <template x-if="!isLoadingPage && open === 0">
+          <template x-for="message in messages" :key="message.id">
+            <div class="message-container">
+              <label>
+                <input type="checkbox" />
+              </label>
+              <div :id="message.id" x-text="message.text" class="message"></div>
+            </div>
+          </template>
+        </template>
+      </div>
+      <template x-if="!isLoadingPage && open === 0">
+        <div
+          class="message-input"
+          x-data="{
+          input: '',
+          post() {
+            postMessage(this.input);
+            $refs.input.innerText = '';
+          }
+        }"
+        >
+          <div
+            class="input-div"
+            contenteditable="true"
+            @input="input = $el.innerText"
+            x-ref="input"
+          ></div>
+          <div
+            class="button"
+            tabindex="0"
+            @click="post()"
+            @keydown="if ($event.key === 'Enter') post()"
+          >
+            &gt;
+          </div>
+        </div>
+      </template>
+      <!-- ------ NOTE PAGE ------ -->
+      <template x-if="!isLoadingPage && open !== 0">
+        <div
+          class="note-container"
+          x-data="{
+          note: '',
+          post() {
+            putNote(this.note);
+          }
+        }"
+        >
+          <div
+            class="note"
+            contenteditable="true"
+            @input.debounce.800ms="note = $el.innerText"
+          ></div>
+        </div>
+      </template>
+    </div>
   </body>
 </html>
