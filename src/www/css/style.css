@@ -47,10 +47,15 @@ body {
   justify-content: space-between;
 }
 
+.message-container label {
+  align-self: center;
+}
+
 .message {
   background: silver;
   padding: 0.2rem 0.5rem 0.2rem 0.5rem;
   border-radius: 0.5rem;
+  white-space: pre-wrap;
 }
 
 .message-input {
@@ -62,5 +67,6 @@ body {
 .input-div {
   background: white;
   flex: 1;
-  max-height: 6rem;
+  max-height: 10rem;
+  overflow: auto;
 }

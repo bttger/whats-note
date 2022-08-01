@@ -11,16 +11,15 @@
       src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"
     ></script>
     <script>
-      function scrollIntoView(id) {
+      function scrollIntoView(id, smooth = false) {
         const elem = document.getElementById(id);
-        elem.scrollIntoView({ behavior: "smooth" });
+        elem.scrollIntoView({ behavior: smooth ? "smooth" : "auto" });
       }
 
       function data() {
         return {
-          async init() {
+          init() {
             this.getMessages();
-            this.isLoadingPage = false;
           },
           isLoadingPage: true,
           open: 0,
@@ -36,13 +35,21 @@
             } else {
               this.getNote(this.open);
             }
-            this.isLoadingPage = false;
+          },
+          scrollLastMsgIntoView() {
+            const lastId = this.messages[this.messages.length - 1]?.id;
+            if (lastId) {
+              this.$nextTick(() => scrollIntoView(lastId));
+            }
           },
           getMessages() {
-            // TODO
-
-            const lastId = "";
-            this.$nextTick(() => scrollIntoView(lastId));
+            fetch("/api/messages", { method: "GET" })
+              .then(async (response) => {
+                this.messages = await response.json();
+                this.isLoadingPage = false;
+                this.scrollLastMsgIntoView();
+              })
+              .catch();
           },
           postMessage(message) {
             if (!message) return;
@@ -54,9 +61,9 @@
               checked: false,
             };
             this.messages.push(body);
-            this.$nextTick(() => scrollIntoView(id));
+            this.$nextTick(() => scrollIntoView(id, true));
             // TODO web storage queueing if request fails
-            fetch("/messages", {
+            fetch("/api/messages", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
@@ -125,8 +132,9 @@
           x-data="{
           input: '',
           post() {
-            postMessage(this.input);
+            postMessage(this.input.trim());
             $refs.input.innerText = '';
+            $refs.input.focus();
           }
         }"
         >
@@ -140,7 +148,7 @@
             class="button"
             tabindex="0"
             @click="post()"
-            @keydown="if ($event.key === 'Enter') post()"
+            @keyup.enter="post()"
           >
             &gt;
           </div>
