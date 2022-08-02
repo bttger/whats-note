@@ -30,11 +30,23 @@ export default async function apiController(fastify, options) {
   });
 
   fastify.get("/messages", async (request) => {
-    let skip = 0;
+    let from =
+      messages.length - options.apiEnv.pageSizeMessages > 0
+        ? messages.length - options.apiEnv.pageSizeMessages
+        : 0;
+    let until = messages.length;
+    // Pages range from 1 to n
     if (request.query.page) {
-      skip = parseInt(request.query.page) * options.apiEnv.pageSizeMessages;
+      const fromCache =
+        messages.length -
+        parseInt(request.query.page) * options.apiEnv.pageSizeMessages;
+      from = fromCache > 0 ? fromCache : 0;
+      const untilCache =
+        messages.length -
+        (parseInt(request.query.page) - 1) * options.apiEnv.pageSizeMessages;
+      until = untilCache > 0 ? untilCache : 0;
     }
-    return messages.slice(skip, options.apiEnv.pageSizeMessages);
+    return messages.slice(from, until);
   });
 
   fastify.post("/messages", async (request) => {
