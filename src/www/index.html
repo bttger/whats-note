@@ -16,6 +16,11 @@
         elem.scrollIntoView({ behavior: smooth ? "smooth" : "auto" });
       }
 
+      function pasteAsPlainText(event) {
+        event.preventDefault();
+        event.target.innerText = event.clipboardData.getData("text/plain");
+      }
+
       function data() {
         return {
           init() {
@@ -148,6 +153,7 @@
             class="input-div"
             contenteditable="true"
             @input="input = $el.innerText"
+            @paste="pasteAsPlainText($event)"
             x-ref="input"
           ></div>
           <div
