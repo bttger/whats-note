@@ -32,21 +32,27 @@
       function data() {
         return {
           init() {
-            this.getMessages();
+            this.openTab(0);
           },
-          isDisconnected: false,
+          // 0: Synced, 1: Syncing, 2: Unsynced due to network error
+          state: 1,
           open: 0,
           tabs: [0, 1, 2, 3, 4, 5],
           messages: [],
+          unsyncedMessages: [],
           notes: {},
           messagesPage: 0,
-          openTab(id) {
-            this.isDisconnected = false;
+          async openTab(id) {
             this.open = id;
+            this.state = 1;
             if (this.open === 0) {
-              this.getMessages();
+              this.loadMessagesFromStore();
+              await this.getMessages();
             } else {
-              this.getNote(this.open);
+              await this.getNote(this.open);
+            }
+            if (this.state === 1) {
+              this.state = 0;
             }
           },
           scrollLastMsgIntoView() {
@@ -55,23 +61,42 @@
               this.$nextTick(() => scrollIntoView(lastId));
             }
           },
+          loadMessagesFromStore() {
+            this.messages =
+              JSON.parse(window.localStorage.getItem("messages")) || [];
+            this.unsyncedMessages =
+              JSON.parse(window.localStorage.getItem("unsyncedMessages")) || [];
+            this.scrollLastMsgIntoView();
+          },
+          syncMessagesWithStore() {
+            window.localStorage.setItem(
+              "messages",
+              JSON.stringify(this.messages)
+            );
+            window.localStorage.setItem(
+              "unsyncedMessages",
+              JSON.stringify(this.unsyncedMessages)
+            );
+          },
           async getMessages() {
             try {
               const response = await fetch("/api/messages", { method: "GET" });
               if (response.ok) {
                 this.messages = await response.json();
                 this.scrollLastMsgIntoView();
+                this.syncMessagesWithStore();
               } else if (response.status === 401) {
                 window.location.replace("/login");
               } else {
-                // TODO
+                this.state = 2;
               }
             } catch (error) {
-              this.isDisconnected = true;
+              this.state = 2;
             }
           },
           async postMessage(message) {
             if (!message) return;
+
             const id = crypto.randomUUID();
             const body = {
               id,
@@ -79,8 +104,12 @@
               sentAt: Date.now(),
               checked: false,
             };
+            this.unsyncedMessages.push({ inProgress: true, body });
             this.messages.push(body);
             this.$nextTick(() => scrollIntoView(id, true));
+
+            this.syncMessagesWithStore();
+
             try {
               const response = await fetch("/api/messages", {
                 method: "POST",
@@ -90,15 +119,30 @@
                 body: JSON.stringify(body),
               });
               if (response.ok) {
-                // Remove from storage queue
+                // Remove from unsynced queue
+                this.unsyncedMessages = this.unsyncedMessages.filter(
+                  (m) => m.body.id !== body.id
+                );
               } else if (response.status === 401) {
                 window.location.replace("/login");
               } else {
-                // TODO failed queue
+                // Update inProgress prop in unsynced queue
+                const found = this.unsyncedMessages.find(
+                  (m) => m.body.id === body.id
+                );
+                found.inProgress = false;
+                this.state = 2;
               }
             } catch (error) {
-              // TODO failed queue
+              // Update inProgress prop in unsynced queue
+              const found = this.unsyncedMessages.find(
+                (m) => m.body.id === body.id
+              );
+              found.inProgress = false;
+              this.state = 2;
             }
+
+            this.syncMessagesWithStore();
           },
           async checkOffMessage(id, index, checkOff = true) {
             function resetCheckbox() {
@@ -124,10 +168,23 @@
               resetCheckbox();
             }
           },
-          getNote(id) {
+          renderMessageInfoText(message) {
+            const date = new Date(message.sentAt).toLocaleString();
+            const found = this.unsyncedMessages.find(
+              (m) => m.body.id === message.id
+            );
+            if (!found) {
+              return date + " ✓";
+            }
+            if (found.inProgress) {
+              return date + " o";
+            }
+            return date + " x";
+          },
+          async getNote(id) {
             // TODO
           },
-          putNote(id) {
+          async putNote(id) {
             // TODO
           },
         };
@@ -136,6 +193,12 @@
   </head>
   <body x-data="data()">
     <div class="container">
+      <!-- ------ STATE BAR ------ -->
+      <div
+        x-show="state !== 0"
+        class="state-bar"
+        :style="state === 1 ? 'background: #000bda' : 'background: #d80000'"
+      ></div>
       <!-- ------ TAB NAVIGATION ------ -->
       <div class="tabs">
         <template x-for="tab in tabs">
@@ -166,7 +229,7 @@
               >
                 <div x-text="message.text"></div>
                 <span
-                  x-text="new Date(message.sentAt).toLocaleString() + ' ✓'"
+                  x-text="renderMessageInfoText(message)"
                   class="message-info"
                 ></span>
               </div>
