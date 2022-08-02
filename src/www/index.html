@@ -82,11 +82,23 @@
               })
               .catch();
           },
-          deleteMessage(id) {
-            // TODO
-          },
-          checkOffMessage(id) {
-            // TODO
+          async checkOffMessage(id, index, checkOff = true) {
+            try {
+              const response = await fetch(`/api/messages/${id}`, {
+                method: "PATCH",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ checked: checkOff }),
+              });
+              if (response.ok) {
+                this.messages[index].checked = checkOff;
+              } else if (response.status === 401) {
+                window.location.replace("/login");
+              }
+            } catch (error) {
+              // TODO failed queue
+            }
           },
           getNote(id) {
             // TODO
@@ -121,12 +133,20 @@
       <!-- ------ MESSENGER ------ -->
       <template x-if="!isLoadingPage && open === 0">
         <div class="filler-container">
-          <template x-for="message in messages" :key="message.id">
+          <template x-for="(message, index) in messages" :key="message.id">
             <div class="message-container">
               <label>
-                <input type="checkbox" />
+                <input
+                  type="checkbox"
+                  :checked="message.checked"
+                  @change="checkOffMessage(message.id, index, $event.target.checked).catch()"
+                />
               </label>
-              <div :id="message.id" class="message">
+              <div
+                :id="message.id"
+                class="message"
+                :class="message.checked && 'checked'"
+              >
                 <div x-text="message.text"></div>
                 <span
                   x-text="new Date(message.sentAt).toLocaleString() + ' ✓'"

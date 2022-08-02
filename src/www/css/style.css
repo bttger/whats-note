@@ -67,6 +67,11 @@ body {
   align-self: end;
 }
 
+.checked {
+  background: #1a1a1a;
+  color: #ababab;
+}
+
 .message-input {
   display: flex;
   gap: 0.5rem;
