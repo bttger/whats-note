@@ -22,7 +22,11 @@
 
       function pasteAsPlainText(event) {
         event.preventDefault();
-        event.target.innerText = event.clipboardData.getData("text/plain");
+        document.execCommand(
+          "insertHTML",
+          false,
+          event.clipboardData.getData("text/plain")
+        );
       }
 
       function data() {
@@ -30,14 +34,14 @@
           init() {
             this.getMessages();
           },
-          isLoadingPage: true,
+          isDisconnected: false,
           open: 0,
           tabs: [0, 1, 2, 3, 4, 5],
           messages: [],
           notes: {},
           messagesPage: 0,
           openTab(id) {
-            this.isLoadingPage = true;
+            this.isDisconnected = false;
             this.open = id;
             if (this.open === 0) {
               this.getMessages();
@@ -51,16 +55,22 @@
               this.$nextTick(() => scrollIntoView(lastId));
             }
           },
-          getMessages() {
-            fetch("/api/messages", { method: "GET" })
-              .then(async (response) => {
+          async getMessages() {
+            try {
+              const response = await fetch("/api/messages", { method: "GET" });
+              if (response.ok) {
                 this.messages = await response.json();
-                this.isLoadingPage = false;
                 this.scrollLastMsgIntoView();
-              })
-              .catch();
+              } else if (response.status === 401) {
+                window.location.replace("/login");
+              } else {
+                // TODO
+              }
+            } catch (error) {
+              this.isDisconnected = true;
+            }
           },
-          postMessage(message) {
+          async postMessage(message) {
             if (!message) return;
             const id = crypto.randomUUID();
             const body = {
@@ -71,20 +81,24 @@
             };
             this.messages.push(body);
             this.$nextTick(() => scrollIntoView(id, true));
-            // TODO web storage queueing if request fails
-            fetch("/api/messages", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify(body),
-            })
-              .then((response) => {
-                if (response.ok) {
-                  // Remove from storage queue
-                }
-              })
-              .catch();
+            try {
+              const response = await fetch("/api/messages", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify(body),
+              });
+              if (response.ok) {
+                // Remove from storage queue
+              } else if (response.status === 401) {
+                window.location.replace("/login");
+              } else {
+                // TODO failed queue
+              }
+            } catch (error) {
+              // TODO failed queue
+            }
           },
           async checkOffMessage(id, index, checkOff = true) {
             try {
@@ -127,25 +141,17 @@
           ></div>
         </template>
       </div>
-      <!-- ------ PAGE LOADING ------ -->
-      <p
-        x-show="isLoadingPage"
-        style="margin-top: 50px; text-align: center; color: silver"
-      >
-        Loading...
-      </p>
       <!-- ------ MESSENGER ------ -->
-      <template x-if="!isLoadingPage && open === 0">
+      <template x-if="open === 0">
         <div class="filler-container">
           <template x-for="(message, index) in messages" :key="message.id">
             <div class="message-container">
-              <label>
-                <input
-                  type="checkbox"
-                  :checked="message.checked"
-                  @change="checkOffMessage(message.id, index, $event.target.checked).catch()"
-                />
-              </label>
+              <input
+                aria-label="Check off"
+                type="checkbox"
+                :checked="message.checked"
+                @change="checkOffMessage(message.id, index, $event.target.checked).catch()"
+              />
               <div
                 :id="message.id"
                 class="message"
@@ -161,7 +167,7 @@
           </template>
         </div>
       </template>
-      <template x-if="!isLoadingPage && open === 0">
+      <template x-if="open === 0">
         <div
           class="message-input"
           x-data="{
@@ -191,7 +197,7 @@
         </div>
       </template>
       <!-- ------ NOTE PAGE ------ -->
-      <template x-if="!isLoadingPage && open !== 0">
+      <template x-if="open !== 0">
         <div
           class="filler-container note-container"
           x-data="{
