@@ -101,6 +101,10 @@
             }
           },
           async checkOffMessage(id, index, checkOff = true) {
+            function resetCheckbox() {
+              document.getElementById(`checkbox-${id}`).checked = !checkOff;
+            }
+
             try {
               const response = await fetch(`/api/messages/${id}`, {
                 method: "PATCH",
@@ -113,9 +117,11 @@
                 this.messages[index].checked = checkOff;
               } else if (response.status === 401) {
                 window.location.replace("/login");
+              } else {
+                resetCheckbox();
               }
             } catch (error) {
-              // TODO failed queue
+              resetCheckbox();
             }
           },
           getNote(id) {
@@ -147,10 +153,11 @@
           <template x-for="(message, index) in messages" :key="message.id">
             <div class="message-container">
               <input
+                :id="'checkbox-' + message.id"
                 aria-label="Check off"
                 type="checkbox"
                 :checked="message.checked"
-                @change="checkOffMessage(message.id, index, $event.target.checked).catch()"
+                @change="checkOffMessage(message.id, index, $event.target.checked)"
               />
               <div
                 :id="message.id"
