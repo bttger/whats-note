@@ -11,7 +11,6 @@ const __dirname = path.resolve(path.dirname(__filename), "../");
  */
 export default async function staticController(fastify) {
   fastify.addHook("preHandler", async (request, reply) => {
-    console.log(request.session.authenticated);
     if (
       !request.session.authenticated &&
       request.url !== "/login" &&
