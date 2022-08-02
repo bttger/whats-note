@@ -56,6 +56,14 @@ body {
   padding: 0.2rem 0.5rem 0.2rem 0.5rem;
   border-radius: 0.5rem;
   white-space: pre-wrap;
+  display: flex;
+  flex-direction: column;
+}
+
+.message-info {
+  color: #414141;
+  font-size: 0.7rem;
+  align-self: end;
 }
 
 .message-input {

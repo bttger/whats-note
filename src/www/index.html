@@ -114,18 +114,24 @@
         Loading...
       </p>
       <!-- ------ MESSENGER ------ -->
-      <div id="messages" class="filler-container">
-        <template x-if="!isLoadingPage && open === 0">
+      <template x-if="!isLoadingPage && open === 0">
+        <div class="filler-container">
           <template x-for="message in messages" :key="message.id">
             <div class="message-container">
               <label>
                 <input type="checkbox" />
               </label>
-              <div :id="message.id" x-text="message.text" class="message"></div>
+              <div :id="message.id" class="message">
+                <div x-text="message.text"></div>
+                <span
+                  x-text="new Date(message.sentAt).toLocaleString() + ' ✓'"
+                  class="message-info"
+                ></span>
+              </div>
             </div>
           </template>
-        </template>
-      </div>
+        </div>
+      </template>
       <template x-if="!isLoadingPage && open === 0">
         <div
           class="message-input"
@@ -157,7 +163,7 @@
       <!-- ------ NOTE PAGE ------ -->
       <template x-if="!isLoadingPage && open !== 0">
         <div
-          class="note-container"
+          class="filler-container note-container"
           x-data="{
           note: '',
           post() {
