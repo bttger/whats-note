@@ -64,6 +64,8 @@
       }
 
       async function postMessagesRequest(messages) {
+        if (!messages.length) return;
+
         // Ensure only necessary props are transmitted
         const messagesToSend = [];
         messages.forEach((m) => {
@@ -91,6 +93,27 @@
         }
       }
 
+      async function patchMessageRequest(id, checked) {
+        const response = await fetch(`/api/messages/${id}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ checked }),
+        });
+        if (!response.ok) {
+          if (response.status === 401) {
+            window.location.replace("/login");
+          } else {
+            throw new Error(`Status code: ${response.status}`);
+          }
+        }
+      }
+
+      /*
+      --- Utility Functions ---
+      */
+
       function pasteAsPlainText(event) {
         event.preventDefault();
         document.execCommand(
@@ -99,6 +122,10 @@
           event.clipboardData.getData("text/plain")
         );
       }
+
+      /*
+      --- Alpine Data ---
+      */
 
       function data() {
         return {
@@ -130,7 +157,7 @@
           async _resetIsUploadingPropOnStartup() {
             const messages = await selectUnsyncedMessages(this.db);
             for (const m of messages) {
-              m.isUploading = false;
+              m.isUploading = 0;
               await insertOrReplaceMessage(this.db, m);
             }
           },
@@ -142,9 +169,14 @@
           },
           async _syncMessagesWithServer() {
             // Post unsynced messages if there are any
-            const messagesToSync = selectUnsyncedMessages(this.db);
+            const messagesPossiblyToSync = await selectUnsyncedMessages(
+              this.db
+            );
+            const messagesToSync = messagesPossiblyToSync.filter(
+              (m) => !m.isUploading
+            );
             for (const m of messagesToSync) {
-              m.isUploading = true;
+              m.isUploading = 1;
               await insertOrReplaceMessage(this.db, m);
             }
             try {
@@ -157,7 +189,7 @@
             } catch (error) {
               console.log(error);
               for (const m of messagesToSync) {
-                m.isUploading = false;
+                m.isUploading = 0;
                 await insertOrReplaceMessage(this.db, m);
               }
             }
@@ -173,15 +205,15 @@
             await this._updateDisplayedMessages();
           },
           async postMessage(text) {
-            if (!message) return;
+            if (!text) return;
 
             const message = {
               id: crypto.randomUUID(),
-              text,
+              text: text.trim(),
               sentAt: Date.now(),
               checked: false,
-              unsynced: true,
-              isUploading: true,
+              unsynced: 1,
+              isUploading: 1,
             };
 
             await insertOrReplaceMessage(this.db, message);
@@ -193,35 +225,18 @@
               delete message.unsynced;
               await insertOrReplaceMessage(this.db, message);
             } catch (error) {
-              message.isUploading = false;
+              message.isUploading = 0;
               await insertOrReplaceMessage(this.db, message);
               console.log(error);
             }
 
             await this._updateDisplayedMessages();
           },
-          async checkOffMessage(id, index, checkOff = true) {
-            function resetCheckbox() {
-              document.getElementById(`checkbox-${id}`).checked = !checkOff;
-            }
-
+          async checkOffMessage(id, checked = true) {
             try {
-              const response = await fetch(`/api/messages/${id}`, {
-                method: "PATCH",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ checked: checkOff }),
-              });
-              if (response.ok) {
-                this.syncedMessages[index].checked = checkOff;
-              } else if (response.status === 401) {
-                window.location.replace("/login");
-              } else {
-                resetCheckbox();
-              }
+              await patchMessageRequest(id, checked);
             } catch (error) {
-              resetCheckbox();
+              document.getElementById(`checkbox-${id}`).checked = !checked;
             }
           },
           async getNote(id) {
@@ -256,23 +271,16 @@
       <!-- ------ MESSENGER ------ -->
       <template x-if="open === 0">
         <div class="filler-container">
-          <template
-            x-for="(message, index) in syncedMessages"
-            :key="message.id"
-          >
+          <template x-for="message in displayedMessages" :key="message.id">
             <div class="message-container">
               <input
                 :id="'checkbox-' + message.id"
                 aria-label="Check off"
                 type="checkbox"
                 :checked="message.checked"
-                @change="checkOffMessage(message.id, index, $event.target.checked)"
+                @change="checkOffMessage(message, $event.target.checked)"
               />
-              <div
-                :id="message.id"
-                class="message"
-                :class="message.checked && 'checked'"
-              >
+              <div class="message" :class="message.checked && 'checked'">
                 <div x-text="message.text"></div>
                 <span
                   x-text="new Date(message.sentAt).toLocaleString() + (message.unsynced ? ' ▴' : ' ✓')"
@@ -296,6 +304,7 @@
             postMessage(this.input);
             $refs.input.innerText = '';
             $refs.input.focus();
+            this.input = '';
           }
         }"
         >
