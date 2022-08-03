@@ -12,12 +12,83 @@
     <link rel="stylesheet" href="/css/style.css" />
     <script
       defer
+      src="https://cdn.jsdelivr.net/npm/idb@7/build/umd.js"
+    ></script>
+    <script
+      defer
       src="https://unpkg.com/alpinejs@3.10.3/dist/cdn.min.js"
     ></script>
     <script>
-      function scrollIntoView(id, smooth = false) {
-        const elem = document.getElementById(id);
-        elem.scrollIntoView({ behavior: smooth ? "smooth" : "auto" });
+      /*
+      --- IndexedDB Functions ---
+      */
+
+      async function getDB() {
+        return await idb.openDB("note-messenger", 1, {
+          upgrade(db) {
+            const messagesStore = db.createObjectStore("messages", {
+              keyPath: "id",
+            });
+            messagesStore.createIndex("sentAt", "sentAt");
+            messagesStore.createIndex("unsynced", "unsynced");
+          },
+        });
+      }
+
+      async function selectMessagesToDisplay(db) {
+        return (await db.getAllFromIndex("messages", "sentAt")).slice(-50);
+      }
+
+      async function selectUnsyncedMessages(db) {
+        return await db.getAllFromIndex("messages", "unsynced");
+      }
+
+      async function insertOrReplaceMessage(db, message) {
+        await db.put("messages", message);
+      }
+
+      /*
+      --- API Fetch Functions ---
+      */
+
+      async function getMessagesRequest() {
+        const response = await fetch("/api/messages", { method: "GET" });
+        if (!response.ok) {
+          if (response.status === 401) {
+            window.location.replace("/login");
+          } else {
+            throw new Error(`Status code: ${response.status}`);
+          }
+        }
+        return await response.json();
+      }
+
+      async function postMessagesRequest(messages) {
+        // Ensure only necessary props are transmitted
+        const messagesToSend = [];
+        messages.forEach((m) => {
+          messagesToSend.push({
+            id: m.id,
+            text: m.text,
+            sentAt: m.sentAt,
+            checked: m.checked,
+          });
+        });
+
+        const response = await fetch("/api/messages", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(messagesToSend),
+        });
+        if (!response.ok) {
+          if (response.status === 401) {
+            window.location.replace("/login");
+          } else {
+            throw new Error(`Status code: ${response.status}`);
+          }
+        }
       }
 
       function pasteAsPlainText(event) {
@@ -31,23 +102,24 @@
 
       function data() {
         return {
-          init() {
-            this.openTab(0);
+          async init() {
+            this.db = await getDB();
+            await this._resetIsUploadingPropOnStartup();
+            await this.openTab(0);
           },
+          db: null,
           // 0: Synced, 1: Syncing, 2: Unsynced due to network error
           state: 1,
           open: 0,
           tabs: [0, 1, 2, 3, 4, 5],
-          messages: [],
-          unsyncedMessages: [],
+          displayedMessages: [],
           notes: {},
-          messagesPage: 0,
           async openTab(id) {
             this.open = id;
             this.state = 1;
             if (this.open === 0) {
-              this.loadMessagesFromStore();
-              await this.getMessages();
+              await this._updateDisplayedMessages();
+              await this._syncMessagesWithServer();
             } else {
               await this.getNote(this.open);
             }
@@ -55,94 +127,78 @@
               this.state = 0;
             }
           },
-          scrollLastMsgIntoView() {
-            const lastId = this.messages[this.messages.length - 1]?.id;
-            if (lastId) {
-              this.$nextTick(() => scrollIntoView(lastId));
+          async _resetIsUploadingPropOnStartup() {
+            const messages = await selectUnsyncedMessages(this.db);
+            for (const m of messages) {
+              m.isUploading = false;
+              await insertOrReplaceMessage(this.db, m);
             }
           },
-          loadMessagesFromStore() {
-            this.messages =
-              JSON.parse(window.localStorage.getItem("messages")) || [];
-            this.unsyncedMessages =
-              JSON.parse(window.localStorage.getItem("unsyncedMessages")) || [];
-            this.scrollLastMsgIntoView();
-          },
-          syncMessagesWithStore() {
-            window.localStorage.setItem(
-              "messages",
-              JSON.stringify(this.messages)
-            );
-            window.localStorage.setItem(
-              "unsyncedMessages",
-              JSON.stringify(this.unsyncedMessages)
+          async _updateDisplayedMessages() {
+            this.displayedMessages = await selectMessagesToDisplay(this.db);
+            this.$nextTick(() =>
+              document.getElementById("message-container-end").scrollIntoView()
             );
           },
-          async getMessages() {
+          async _syncMessagesWithServer() {
+            // Post unsynced messages if there are any
+            const messagesToSync = selectUnsyncedMessages(this.db);
+            for (const m of messagesToSync) {
+              m.isUploading = true;
+              await insertOrReplaceMessage(this.db, m);
+            }
             try {
-              const response = await fetch("/api/messages", { method: "GET" });
-              if (response.ok) {
-                this.messages = await response.json();
-                this.scrollLastMsgIntoView();
-                this.syncMessagesWithStore();
-              } else if (response.status === 401) {
-                window.location.replace("/login");
-              } else {
-                this.state = 2;
+              await postMessagesRequest(messagesToSync);
+              for (const m of messagesToSync) {
+                delete m.isUploading;
+                delete m.unsynced;
+                await insertOrReplaceMessage(this.db, m);
               }
             } catch (error) {
-              this.state = 2;
+              console.log(error);
+              for (const m of messagesToSync) {
+                m.isUploading = false;
+                await insertOrReplaceMessage(this.db, m);
+              }
             }
+            // Fetch new messages from server
+            try {
+              const possiblyNewMessages = await getMessagesRequest();
+              for (const m of possiblyNewMessages) {
+                await insertOrReplaceMessage(this.db, m);
+              }
+            } catch (error) {
+              console.log(error);
+            }
+            await this._updateDisplayedMessages();
           },
-          async postMessage(message) {
+          async postMessage(text) {
             if (!message) return;
 
-            const id = crypto.randomUUID();
-            const body = {
-              id,
-              text: message,
+            const message = {
+              id: crypto.randomUUID(),
+              text,
               sentAt: Date.now(),
               checked: false,
+              unsynced: true,
+              isUploading: true,
             };
-            this.unsyncedMessages.push({ inProgress: true, body });
-            this.messages.push(body);
-            this.$nextTick(() => scrollIntoView(id, true));
 
-            this.syncMessagesWithStore();
+            await insertOrReplaceMessage(this.db, message);
+            await this._updateDisplayedMessages();
 
             try {
-              const response = await fetch("/api/messages", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify(body),
-              });
-              if (response.ok) {
-                // Remove from unsynced queue
-                this.unsyncedMessages = this.unsyncedMessages.filter(
-                  (m) => m.body.id !== body.id
-                );
-              } else if (response.status === 401) {
-                window.location.replace("/login");
-              } else {
-                // Update inProgress prop in unsynced queue
-                const found = this.unsyncedMessages.find(
-                  (m) => m.body.id === body.id
-                );
-                found.inProgress = false;
-                this.state = 2;
-              }
+              await postMessagesRequest([message]);
+              delete message.isUploading;
+              delete message.unsynced;
+              await insertOrReplaceMessage(this.db, message);
             } catch (error) {
-              // Update inProgress prop in unsynced queue
-              const found = this.unsyncedMessages.find(
-                (m) => m.body.id === body.id
-              );
-              found.inProgress = false;
-              this.state = 2;
+              message.isUploading = false;
+              await insertOrReplaceMessage(this.db, message);
+              console.log(error);
             }
 
-            this.syncMessagesWithStore();
+            await this._updateDisplayedMessages();
           },
           async checkOffMessage(id, index, checkOff = true) {
             function resetCheckbox() {
@@ -158,7 +214,7 @@
                 body: JSON.stringify({ checked: checkOff }),
               });
               if (response.ok) {
-                this.messages[index].checked = checkOff;
+                this.syncedMessages[index].checked = checkOff;
               } else if (response.status === 401) {
                 window.location.replace("/login");
               } else {
@@ -167,19 +223,6 @@
             } catch (error) {
               resetCheckbox();
             }
-          },
-          renderMessageInfoText(message) {
-            const date = new Date(message.sentAt).toLocaleString();
-            const found = this.unsyncedMessages.find(
-              (m) => m.body.id === message.id
-            );
-            if (!found) {
-              return date + " ✓";
-            }
-            if (found.inProgress) {
-              return date + " o";
-            }
-            return date + " x";
           },
           async getNote(id) {
             // TODO
@@ -213,7 +256,10 @@
       <!-- ------ MESSENGER ------ -->
       <template x-if="open === 0">
         <div class="filler-container">
-          <template x-for="(message, index) in messages" :key="message.id">
+          <template
+            x-for="(message, index) in syncedMessages"
+            :key="message.id"
+          >
             <div class="message-container">
               <input
                 :id="'checkbox-' + message.id"
@@ -229,12 +275,16 @@
               >
                 <div x-text="message.text"></div>
                 <span
-                  x-text="renderMessageInfoText(message)"
+                  x-text="new Date(message.sentAt).toLocaleString() + (message.unsynced ? ' ▴' : ' ✓')"
                   class="message-info"
                 ></span>
               </div>
             </div>
           </template>
+          <div
+            id="message-container-end"
+            style="height: 1px; margin-top: -1px"
+          ></div>
         </div>
       </template>
       <template x-if="open === 0">
@@ -243,7 +293,7 @@
           x-data="{
           input: '',
           post() {
-            postMessage(this.input.trim());
+            postMessage(this.input);
             $refs.input.innerText = '';
             $refs.input.focus();
           }

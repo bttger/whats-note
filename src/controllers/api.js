@@ -50,7 +50,10 @@ export default async function apiController(fastify, options) {
   });
 
   fastify.post("/messages", async (request) => {
-    messages.push(request.body);
+    if (!Array.isArray(request.body)) {
+      request.body = [request.body];
+    }
+    messages.push(...request.body);
   });
 
   fastify.delete("/messages/:id", async (request) => {
