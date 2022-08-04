@@ -31,6 +31,10 @@
             });
             messagesStore.createIndex("sentAt", "sentAt");
             messagesStore.createIndex("unsynced", "unsynced");
+            const notesStore = db.createObjectStore("notes", {
+              keyPath: "id",
+            });
+            notesStore.createIndex("unsynced", "unsynced");
           },
         });
       }
@@ -45,6 +49,45 @@
 
       async function insertOrReplaceMessage(db, message) {
         await db.put("messages", message);
+      }
+
+      async function selectNote(db, id) {
+        return (
+          (await db.get("notes", id)) || {
+            id,
+            text: "",
+            lastEdit: Date.now(),
+            unsynced: 0,
+            isSyncing: 0,
+            lastSync: Date.now(),
+          }
+        );
+      }
+
+      async function startUpdateNote(db, id, text) {
+        const note = await selectNote(db, id);
+        note.text = text;
+        note.lastEdit = Date.now();
+        note.isSyncing = 1;
+        note.unsynced = 1;
+        await db.put("notes", note);
+        return note;
+      }
+
+      async function finishUpdateNote(db, id, error = false) {
+        const note = await selectNote(db, id);
+        note.isSyncing = 0;
+        note.unsynced = error ? 1 : 0;
+        note.lastSync = error ? note.lastSync : Date.now();
+        await db.put("notes", note);
+        return note;
+      }
+
+      async function syncNote(db, note) {
+        note.isSyncing = 0;
+        note.unsynced = 0;
+        note.lastSync = Date.now();
+        await db.put("notes", note);
       }
 
       /*
@@ -110,6 +153,26 @@
         }
       }
 
+      async function putNoteRequest(note) {
+        delete note.isSyncing;
+        delete note.unsynced;
+        delete note.lastSync;
+        const response = await fetch(`/api/notes/${note.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(note),
+        });
+        if (!response.ok) {
+          if (response.status === 401) {
+            window.location.replace("/login");
+          } else {
+            throw new Error(`Status code: ${response.status}`);
+          }
+        }
+      }
+
       /*
       --- Utility Functions ---
       */
@@ -121,6 +184,12 @@
           false,
           event.clipboardData.getData("text/plain")
         );
+      }
+
+      function insertLineBreak(event) {
+        // We need this because Chrome inserts divs when breaking lines
+        event.preventDefault();
+        document.execCommand("insertLineBreak");
       }
 
       /*
@@ -140,15 +209,24 @@
           open: 0,
           tabs: [0, 1, 2, 3, 4, 5],
           displayedMessages: [],
-          notes: {},
+          note: {
+            id: 1,
+            text: "",
+            lastEdit: Date.now(),
+            unsynced: 0,
+            isSyncing: 0,
+            lastSync: Date.now(),
+          },
           async openTab(id) {
             this.open = id;
             this.state = 1;
             if (this.open === 0) {
               await this._updateDisplayedMessages();
-              await this._syncMessagesWithServer();
+              await this._syncMessagesWithServer(); // TODO should be _syncWithServer (including notes)
             } else {
-              await this.getNote(this.open);
+              await this._updateDisplayedNote(this.open); // Get from LS and set in data()
+              //await this._syncWithServer(); // if this fails, the note is in stale state and could possibly overwrite data written by another client when reconnecting
+              await this._updateDisplayedNote(this.open);
             }
             if (this.state === 1) {
               this.state = 0;
@@ -201,6 +279,7 @@
               }
             } catch (error) {
               console.log(error);
+              // TODO unsynced state
             }
             await this._updateDisplayedMessages();
           },
@@ -239,11 +318,18 @@
               document.getElementById(`checkbox-${id}`).checked = !checked;
             }
           },
-          async getNote(id) {
-            // TODO
+          async _updateDisplayedNote(id) {
+            this.note = await selectNote(this.db, id);
+            this.$refs.note.innerHTML = this.note.text;
           },
-          async putNote(id) {
-            // TODO
+          async editNote(text) {
+            try {
+              const note = await startUpdateNote(this.db, this.note.id, text);
+              await putNoteRequest(note);
+              this.note = await finishUpdateNote(this.db, note.id);
+            } catch (error) {
+              this.note = await finishUpdateNote(this.db, note.id, true);
+            }
           },
         };
       }
@@ -309,11 +395,12 @@
         }"
         >
           <div
+            x-ref="input"
             class="input-div"
             contenteditable="true"
             @input="input = $el.innerText"
             @paste="pasteAsPlainText($event)"
-            x-ref="input"
+            @keydown.enter="insertLineBreak($event)"
           ></div>
           <div
             class="button"
@@ -327,20 +414,28 @@
       </template>
       <!-- ------ NOTE PAGE ------ -->
       <template x-if="open !== 0">
-        <div
-          class="filler-container note-container"
-          x-data="{
-          note: '',
-          post() {
-            putNote(this.note);
-          }
-        }"
-        >
+        <div class="filler-container">
           <div
+            x-ref="note"
             class="note"
             contenteditable="true"
-            @input.debounce.800ms="note = $el.innerText"
+            @input.debounce.600ms="editNote($el.innerText)"
+            @paste="pasteAsPlainText($event)"
+            @keydown.enter="insertLineBreak($event)"
           ></div>
+        </div>
+      </template>
+      <template x-if="open !== 0">
+        <div class="note-info-container">
+          <div>
+            <div class="button" style="margin-right: 0.3rem">↶</div>
+            <div class="button">↷</div>
+          </div>
+          <div class="note-info">
+            <div
+              x-text="'Last edit: ' + new Date(note.lastEdit).toLocaleString()"
+            ></div>
+          </div>
         </div>
       </template>
     </div>
