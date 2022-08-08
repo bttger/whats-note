@@ -54,18 +54,14 @@ export default async function apiController(fastify, options) {
 
   fastify.get("/sync", async (request) => {
     const response = {};
-    console.log(request.query);
+
     // Object with the note IDs as keys and their lastSync as value
     const notesLastSync = JSON.parse(request.query.notes);
-    console.log(notesLastSync);
     for (const id of Array.from(
       { length: options.apiEnv.numberOfNotes },
       (_, i) => i + 1
     )) {
-      if (
-        !notesLastSync[id] ||
-        notes[id]?.lastEdit > notesLastSync[id].lastSync
-      ) {
+      if (!notesLastSync[id] || notes[id]?.lastEdit > notesLastSync[id]) {
         if (!response.notes && notes[id]) response.notes = {};
         if (notes[id]) response.notes[id] = notes[id];
       }
@@ -84,11 +80,10 @@ export default async function apiController(fastify, options) {
     const actualLastMessagesHash = cyrb53(
       JSON.stringify(lastMessagesIds)
     ).toString();
-    console.log(actualLastMessagesHash);
     if (lastMessagesHash !== actualLastMessagesHash) {
       response.messages = lastMessages;
     }
-    console.log(response);
+
     return response;
   });
 }

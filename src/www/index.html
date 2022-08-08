@@ -20,6 +20,7 @@
     ></script>
     <script>
       const MAX_MESSAGES_TO_SYNC = 20;
+      const SYNC_EVERY_SECS = 10;
 
       /*
       --- IndexedDB Functions ---
@@ -255,6 +256,9 @@
             this.db = await getDB();
             await this._resetIsUploadingPropOnStartup();
             await this.openTab(0);
+            setInterval(() => {
+              this._syncWithServer();
+            }, SYNC_EVERY_SECS * 1000);
           },
           db: null,
           // 0: Synced, 1: Syncing, 2: Unsynced due to network error
