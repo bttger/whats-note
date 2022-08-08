@@ -23,7 +23,8 @@ server.register(apiController, {
   prefix: "/api",
   apiEnv: {
     password: process.env.PASSWORD,
-    pageSizeMessages: process.env.PAGE_SIZE || 40,
+    maxMessagesToSync: process.env.MAX_MESSAGES_TO_SYNC || 20,
+    numberOfNotes: 5,
   },
 });
 

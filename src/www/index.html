@@ -19,6 +19,8 @@
       src="https://unpkg.com/alpinejs@3.10.3/dist/cdn.min.js"
     ></script>
     <script>
+      const MAX_MESSAGES_TO_SYNC = 20;
+
       /*
       --- IndexedDB Functions ---
       */
@@ -39,8 +41,20 @@
         });
       }
 
-      async function selectMessagesToDisplay(db) {
-        return (await db.getAllFromIndex("messages", "sentAt")).slice(-50);
+      async function selectMessages(db, count = 200, onlyId = false) {
+        const messages = [];
+        let cursor = await db
+          .transaction("messages", "readonly")
+          .store.index("sentAt")
+          .openCursor(undefined, "prev");
+
+        while (cursor && count > 0) {
+          messages.unshift(onlyId ? cursor.value.id : cursor.value);
+          cursor = await cursor.continue();
+          count--;
+        }
+
+        return messages;
       }
 
       async function selectUnsyncedMessages(db) {
@@ -62,6 +76,10 @@
             lastSync: Date.now(),
           }
         );
+      }
+
+      async function selectNotes(db) {
+        return await db.getAll("notes");
       }
 
       async function startUpdateNote(db, id, text) {
@@ -94,8 +112,20 @@
       --- API Fetch Functions ---
       */
 
-      async function getMessagesRequest() {
-        const response = await fetch("/api/messages", { method: "GET" });
+      /**
+       * Sends a GET request to the /sync endpoint
+       * @param notes { string: number } The noteId as key and lastSync as value
+       * @param messageIds [ string ] The last MAX_MESSAGES_TO_SYNC messageIds ordered by sentAt ASC
+       * @returns Promise<{ notes: { string: noteObj }, messages: [ messageObj ]}>
+       */
+      async function getSyncRequest(notes, messageIds) {
+        const notesLastSync = decodeURIComponent(JSON.stringify(notes));
+        const messagesHash = cyrb53(JSON.stringify(messageIds));
+
+        const response = await fetch(
+          `/api/sync?notes=${notesLastSync}&messages=${messagesHash}`,
+          { method: "GET" }
+        );
         if (!response.ok) {
           if (response.status === 401) {
             window.location.replace("/login");
@@ -193,6 +223,29 @@
       }
 
       /*
+          cyrb53 (c) 2018 bryc (github.com/bryc)
+          A fast and simple hash function with decent collision resistance.
+          Largely inspired by MurmurHash2/3, but with a focus on speed/simplicity.
+          Public domain. Attribution appreciated.
+      */
+      const cyrb53 = function (str, seed = 0) {
+        let h1 = 0xdeadbeef ^ seed,
+          h2 = 0x41c6ce57 ^ seed;
+        for (let i = 0, ch; i < str.length; i++) {
+          ch = str.charCodeAt(i);
+          h1 = Math.imul(h1 ^ ch, 2654435761);
+          h2 = Math.imul(h2 ^ ch, 1597334677);
+        }
+        h1 =
+          Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^
+          Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+        h2 =
+          Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^
+          Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+        return 4294967296 * (2097151 & h2) + (h1 >>> 0);
+      };
+
+      /*
       --- Alpine Data ---
       */
 
@@ -222,11 +275,10 @@
             this.state = 1;
             if (this.open === 0) {
               await this._updateDisplayedMessages();
-              await this._syncMessagesWithServer(); // TODO should be _syncWithServer (including notes)
+              await this._syncWithServer();
             } else {
-              await this._updateDisplayedNote(this.open); // Get from LS and set in data()
-              //await this._syncWithServer(); // if this fails, the note is in stale state and could possibly overwrite data written by another client when reconnecting
-              await this._updateDisplayedNote(this.open);
+              await this._updateDisplayedNote();
+              await this._syncWithServer();
             }
             if (this.state === 1) {
               this.state = 0;
@@ -240,12 +292,12 @@
             }
           },
           async _updateDisplayedMessages() {
-            this.displayedMessages = await selectMessagesToDisplay(this.db);
+            this.displayedMessages = await selectMessages(this.db);
             this.$nextTick(() =>
               document.getElementById("message-container-end").scrollIntoView()
             );
           },
-          async _syncMessagesWithServer() {
+          async _syncWithServer() {
             // Post unsynced messages if there are any
             const messagesPossiblyToSync = await selectUnsyncedMessages(
               this.db
@@ -271,17 +323,38 @@
                 await insertOrReplaceMessage(this.db, m);
               }
             }
-            // Fetch new messages from server
+            // Fetch new messages and updated notes from server
             try {
-              const possiblyNewMessages = await getMessagesRequest();
-              for (const m of possiblyNewMessages) {
-                await insertOrReplaceMessage(this.db, m);
+              const notesLastSync = {};
+              for (const note of await selectNotes(this.db)) {
+                notesLastSync[note.id] = note.lastSync;
+              }
+
+              const resp = await getSyncRequest(
+                notesLastSync,
+                await selectMessages(this.db, MAX_MESSAGES_TO_SYNC, true)
+              );
+              if (resp.messages) {
+                for (const m of resp.messages) {
+                  await insertOrReplaceMessage(this.db, m);
+                }
+                if (this.open === 0) {
+                  await this._updateDisplayedMessages();
+                }
+              }
+              if (resp.notes) {
+                for (const [noteId, note] of Object.entries(resp.notes)) {
+                  await syncNote(this.db, note);
+                  if (this.open.toString() === noteId) {
+                    await this._updateDisplayedNote();
+                  }
+                }
               }
             } catch (error) {
               console.log(error);
               // TODO unsynced state
+              // if it fails, the client is in stale state and could possibly overwrite data written by another client when reconnecting
             }
-            await this._updateDisplayedMessages();
           },
           async postMessage(text) {
             if (!text) return;
@@ -318,13 +391,14 @@
               document.getElementById(`checkbox-${id}`).checked = !checked;
             }
           },
-          async _updateDisplayedNote(id) {
-            this.note = await selectNote(this.db, id);
+          async _updateDisplayedNote() {
+            this.note = await selectNote(this.db, this.open);
             this.$refs.note.innerHTML = this.note.text;
           },
           async editNote(text) {
+            let note;
             try {
-              const note = await startUpdateNote(this.db, this.note.id, text);
+              note = await startUpdateNote(this.db, this.note.id, text);
               await putNoteRequest(note);
               this.note = await finishUpdateNote(this.db, note.id);
             } catch (error) {
