@@ -66,6 +66,12 @@
         await db.put("messages", message);
       }
 
+      async function updateMessage(db, id, partialMessageObj) {
+        let msg = await db.get("messages", id);
+        msg = { ...msg, ...partialMessageObj };
+        await insertOrReplaceMessage(db, msg);
+      }
+
       async function selectNote(db, id) {
         return (
           (await db.get("notes", id)) || {
@@ -305,11 +311,15 @@
               await insertOrReplaceMessage(this.db, m);
             }
           },
-          async _updateDisplayedMessages() {
+          async _updateDisplayedMessages(withoutScroll = false) {
             this.displayedMessages = await selectMessages(this.db);
-            this.$nextTick(() =>
-              document.getElementById("message-container-end").scrollIntoView()
-            );
+            if (!withoutScroll) {
+              this.$nextTick(() =>
+                document
+                  .getElementById("message-container-end")
+                  .scrollIntoView()
+              );
+            }
           },
           async _syncWithServer() {
             // Post unsynced messages if there are any
@@ -403,6 +413,8 @@
           async checkOffMessage(id, checked = true) {
             try {
               await patchMessageRequest(id, checked);
+              await updateMessage(this.db, id, { checked });
+              await this._updateDisplayedMessages(true);
             } catch (error) {
               document.getElementById(`checkbox-${id}`).checked = !checked;
             }
@@ -458,7 +470,7 @@
                 aria-label="Check off"
                 type="checkbox"
                 :checked="message.checked"
-                @change="checkOffMessage(message, $event.target.checked)"
+                @change="checkOffMessage(message.id, $event.target.checked)"
               />
               <div class="message" :class="message.checked && 'checked'">
                 <div x-text="message.text"></div>
