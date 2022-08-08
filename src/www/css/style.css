@@ -97,6 +97,7 @@ body {
     inset 2px 2px #434343;
   box-sizing: border-box;
   padding: 3px 4px;
+  white-space: pre-wrap;
 }
 
 input[type="checkbox"] {
