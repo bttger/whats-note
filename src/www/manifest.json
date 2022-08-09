@@ -1,0 +1,32 @@
+{
+  "short_name": "WhatsNote",
+  "name": "WhatsNote: Message yourself notes",
+  "description": "Send yourself messages, organize your notes, and sync them with all your devices in a freaking simple PWA",
+  "icons": [
+    {
+      "src": "/images/NotoV1Memo.svg",
+      "type": "image/svg+xml",
+      "sizes": "32x32"
+    },
+    {
+      "src": "/images/NotoV1Memo_64x64.png",
+      "type": "image/png",
+      "sizes": "64x64"
+    },
+    {
+      "src": "/images/NotoV1Memo_128x128.png",
+      "type": "image/png",
+      "sizes": "128x128"
+    },
+    {
+      "src": "/images/NotoV1Memo_640x640.png",
+      "type": "image/png",
+      "sizes": "640x640"
+    }
+  ],
+  "start_url": "/",
+  "scope": "/",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "display": "standalone"
+}

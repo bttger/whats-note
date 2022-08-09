@@ -14,7 +14,8 @@ export default async function staticController(fastify) {
     if (
       !request.session.authenticated &&
       request.url !== "/login" &&
-      !request.url.startsWith("/images")
+      !request.url.startsWith("/images") &&
+      !request.url.startsWith("/manifest.json")
     ) {
       reply.redirect("/login");
     }
