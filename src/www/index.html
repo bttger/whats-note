@@ -223,22 +223,13 @@
         );
       }
 
-      function getInnerText(innerHTML) {
+      function insertLineBreak() {
         // We need to remove double line breaks because Chrome inserts <div>'s
-        // with <br>'s when breaking lines.
-        // Usually, this could be done easily with ...
-        // event.preventDefault();
-        // document.execCommand("insertLineBreak");
-        // ... but then, unfortunately, the browser wouldn't scroll the div
-        // anymore when the user inserts line breaks.
-        innerHTML = innerHTML.replace(/^[^<]+/, (match) =>
-          match.endsWith("\n") ? match : match + "\n"
-        );
-        innerHTML = innerHTML.replaceAll("<br>", "\n");
-        innerHTML = innerHTML.replaceAll(/<div>[\r\n]<\/div>/g, "\n");
-        innerHTML = innerHTML.replaceAll(/<div>([\s\S]*?)<\/div>/g, "$1\n");
-        innerHTML = innerHTML.replaceAll("&nbsp;", " ");
-        return innerHTML;
+        // with <br>'s when breaking lines. Unfortunately this prevents the
+        // browser to automatically scroll to the cursor position when inserting
+        // line breaks.
+        event.preventDefault();
+        document.execCommand("insertLineBreak");
       }
 
       /*
@@ -382,8 +373,8 @@
               // if it fails, the client is in stale state and could possibly overwrite data written by another client when reconnecting
             }
           },
-          async postMessage(innerHtml) {
-            const text = getInnerText(innerHtml).trim();
+          async postMessage(innerText) {
+            const text = innerText.trim();
 
             if (!text) return;
 
@@ -425,14 +416,10 @@
             this.note = await selectNote(this.db, this.open);
             this.$refs.note.innerHTML = this.note.text;
           },
-          async editNote(innerHtml) {
+          async editNote(innerText) {
             let note;
             try {
-              note = await startUpdateNote(
-                this.db,
-                this.note.id,
-                getInnerText(innerHtml)
-              );
+              note = await startUpdateNote(this.db, this.note.id, innerText);
               await putNoteRequest(note);
               this.note = await finishUpdateNote(this.db, note.id);
             } catch (error) {
@@ -494,7 +481,7 @@
           class="message-input"
           x-data="{
           post() {
-            postMessage($refs.input.innerHTML);
+            postMessage($refs.input.innerText);
             $refs.input.innerHTML = '';
             $refs.input.focus();
           }
@@ -505,6 +492,7 @@
             class="input-div"
             contenteditable="true"
             @paste="pasteAsPlainText($event)"
+            @keydown.enter="insertLineBreak()"
           ></div>
           <div
             class="button"
@@ -523,8 +511,9 @@
             x-ref="note"
             class="note"
             contenteditable="true"
-            @input.debounce.600ms="editNote($el.innerHTML)"
+            @input.debounce.600ms="editNote($el.innerText)"
             @paste="pasteAsPlainText($event)"
+            @keydown.enter="insertLineBreak()"
           ></div>
         </div>
       </template>
