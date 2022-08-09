@@ -231,9 +231,11 @@
         // document.execCommand("insertLineBreak");
         // ... but then, unfortunately, the browser wouldn't scroll the div
         // anymore when the user inserts line breaks.
-        innerHTML = innerHTML.replace(/(^[^<]+)/, "$1\n");
+        innerHTML = innerHTML.replace(/^[^<]+/, (match) =>
+          match.endsWith("\n") ? match : match + "\n"
+        );
         innerHTML = innerHTML.replaceAll("<br>", "\n");
-        innerHTML = innerHTML.replaceAll(/<div>\\n<\/div>/g, "\n");
+        innerHTML = innerHTML.replaceAll(/<div>[\r\n]<\/div>/g, "\n");
         innerHTML = innerHTML.replaceAll(/<div>([\s\S]*?)<\/div>/g, "$1\n");
         innerHTML = innerHTML.replaceAll("&nbsp;", " ");
         return innerHTML;
@@ -529,8 +531,14 @@
       <template x-if="open !== 0">
         <div class="note-info-container">
           <div>
-            <div class="button" style="margin-right: 0.3rem">↶</div>
-            <div class="button">↷</div>
+            <div
+              class="button"
+              style="margin-right: 0.3rem"
+              @click="document.execCommand('undo')"
+            >
+              ↶
+            </div>
+            <div class="button" @click="document.execCommand('redo')">↷</div>
           </div>
           <div class="note-info">
             <div
