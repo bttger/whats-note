@@ -1,6 +1,28 @@
 {
   "name": "whats-note",
+  "version": "0.1.0",
+  "description": "Send yourself messages, organize your notes, and sync them with all your devices in a freaking simple PWA",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bttger/whats-note.git"
+  },
+  "keywords": [
+    "productivity",
+    "notes",
+    "memo",
+    "note",
+    "message",
+    "sync",
+    "pwa"
+  ],
+  "author": "Tom Böttger",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/bttger/whats-note/issues"
+  },
+  "homepage": "https://github.com/bttger/whats-note",
   "workspaces": [
-    "backend"
+    "backend",
+    "frontend"
   ]
 }
