@@ -1,9 +1,19 @@
 {
-  "name": "whats-note-frontend",
-  "version": "0.1.0",
-  "main": "index.js",
-  "devDependencies": {},
+  "name": "frontend",
+  "private": true,
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^1.0.1",
+    "eslint": "^8.22.0",
+    "eslint-plugin-svelte3": "^4.0.0",
+    "prettier": "^2.7.1",
+    "prettier-plugin-svelte": "^2.7.0",
+    "svelte": "^3.49.0",
+    "vite": "^3.0.7"
   }
 }
