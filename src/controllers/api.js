@@ -1,10 +1,23 @@
+import * as fs from "fs";
+
 /**
  * @param {FastifyInstance} fastify  Encapsulated Fastify Instance
  * @param {Object} options plugin options, refer to https://www.fastify.io/docs/latest/Reference/Plugins/#plugin-options
  */
 export default async function apiController(fastify, options) {
-  let messages = [];
-  const notes = {};
+  function openDb() {
+    try {
+      return JSON.parse(fs.readFileSync(options.apiEnv.dbFileName).toString());
+    } catch (error) {
+      return { notes: {}, messages: [] };
+    }
+  }
+
+  function flushDb(db) {
+    fs.writeFileSync(options.apiEnv.dbFileName, JSON.stringify(db));
+  }
+
+  const db = openDb();
 
   fastify.addHook("preHandler", async (request, reply) => {
     if (
@@ -33,23 +46,27 @@ export default async function apiController(fastify, options) {
     if (!Array.isArray(request.body)) {
       request.body = [request.body];
     }
-    messages.push(...request.body);
+    db.messages.push(...request.body);
+    flushDb(db);
   });
 
   fastify.delete("/messages/:id", async (request) => {
     const { id } = request.params;
-    messages = messages.filter((m) => m.id !== id);
+    db.messages = db.messages.filter((m) => m.id !== id);
+    flushDb(db);
   });
 
   fastify.patch("/messages/:id", async (request) => {
     const { id } = request.params;
-    const index = messages.findIndex((m) => m.id === id);
-    messages[index] = { ...messages[index], ...request.body };
+    const index = db.messages.findIndex((m) => m.id === id);
+    db.messages[index] = { ...db.messages[index], ...request.body };
+    flushDb(db);
   });
 
   fastify.put("/notes/:id", async (request) => {
     const { id } = request.params;
-    notes[id] = request.body;
+    db.notes[id] = request.body;
+    flushDb(db);
   });
 
   fastify.get("/sync", async (request) => {
@@ -61,25 +78,26 @@ export default async function apiController(fastify, options) {
       { length: options.apiEnv.numberOfNotes },
       (_, i) => i + 1
     )) {
-      if (!notesLastSync[id] || notes[id]?.lastEdit > notesLastSync[id]) {
-        if (!response.notes && notes[id]) response.notes = {};
-        if (notes[id]) response.notes[id] = notes[id];
+      if (!notesLastSync[id] || db.notes[id]?.lastEdit > notesLastSync[id]) {
+        if (!response.notes && db.notes[id]) response.notes = {};
+        if (db.notes[id]) response.notes[id] = db.notes[id];
       }
     }
 
     // cyrb53 hash value
     const lastMessagesHash = request.query.messages;
     const from =
-      messages.length - options.apiEnv.maxMessagesToSync > 0
-        ? messages.length - options.apiEnv.maxMessagesToSync
+      db.messages.length - options.apiEnv.maxMessagesToSync > 0
+        ? db.messages.length - options.apiEnv.maxMessagesToSync
         : 0;
-    const lastMessages = messages
+    const lastMessages = db.messages
       .sort((m1, m2) => (m1.sentAt > m2.sentAt ? 1 : -1))
-      .slice(from, messages.length);
+      .slice(from, db.messages.length);
     const lastMessagesIds = lastMessages.map((m) => m.id);
     const actualLastMessagesHash = cyrb53(
       JSON.stringify(lastMessagesIds)
     ).toString();
+
     if (lastMessagesHash !== actualLastMessagesHash) {
       response.messages = lastMessages;
     }
