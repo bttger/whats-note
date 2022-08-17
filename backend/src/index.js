@@ -29,6 +29,25 @@ server.register(apiController, {
   },
 });
 
+// Ensure graceful shutdown
+const signals = ["SIGINT", "SIGTERM"];
+signals.forEach((signal) => {
+  process.once(signal, () => {
+    server.log.info({ signal: signal }, "received termination signal");
+
+    // Make sure server terminates after timeout
+    setTimeout(() => {
+      server.log.error(
+        { signal: signal, timeout: SHUTDOWN_TIMEOUT },
+        "terminate process after timeout"
+      );
+      process.exit(1);
+    }, SHUTDOWN_TIMEOUT).unref();
+
+    server.close();
+  });
+});
+
 const start = async () => {
   try {
     await server.listen({ port: 3000, host: "0.0.0.0" });
