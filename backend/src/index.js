@@ -28,10 +28,7 @@ server.register(sqliteDB);
 server.register(apiController, {
   prefix: "/api",
   apiEnv: {
-    password: process.env.PASSWORD,
-    maxMessagesToSync: process.env.MAX_MESSAGES_TO_SYNC || 20,
-    dbFileName: process.env.DB_FILE_NAME || "whatsnote_db.json",
-    numberOfNotes: 5,
+    cookieMaxAge: COOKIE_MAX_AGE,
   },
 });
 
