@@ -16,8 +16,16 @@ CREATE TABLE IF NOT EXISTS message_events (
 ) STRICT;
 
 CREATE TABLE IF NOT EXISTS notes (
-  id INTEGER PRIMARY KEY,
+  id INTEGER,
   last_edit INTEGER,
   received_at INTEGER,
-  from_account INTEGER REFERENCES accounts(id) ON UPDATE CASCADE ON DELETE CASCADE
+  data TEXT,
+  from_account INTEGER REFERENCES accounts(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  PRIMARY KEY (id, from_account)
 ) STRICT;
+
+CREATE INDEX IF NOT EXISTS sync_message_events
+ON message_events (from_account, received_at);
+
+CREATE INDEX IF NOT EXISTS sync_notes
+ON notes (from_account, received_at);
