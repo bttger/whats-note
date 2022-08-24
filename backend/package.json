@@ -15,6 +15,7 @@
     "@fastify/cookie": "^7.3.1",
     "@fastify/session": "^9.0.0",
     "@fastify/static": "^6.5.0",
+    "argon2": "^0.29.1",
     "better-sqlite3": "^7.6.2",
     "fastify": "^4.3.0",
     "fastify-plugin": "^4.2.0"

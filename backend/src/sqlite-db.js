@@ -33,4 +33,5 @@ export const sqliteDB = fp(async function (fastify) {
 
   fastify.decorate("db", db);
 });
+
 export default sqliteDB;
