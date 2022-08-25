@@ -1,4 +1,5 @@
 import argon2 from "argon2";
+import { EventEmitter } from "node:events";
 
 /**
  * @param {FastifyInstance} fastify  Encapsulated Fastify Instance
@@ -34,7 +35,10 @@ export default async function apiController(fastify, options) {
       .get(request.body.email);
 
     try {
-      if (await argon2.verify(account.pw_hash, request.body.password)) {
+      if (
+        account &&
+        (await argon2.verify(account.pw_hash, request.body.password))
+      ) {
         request.session.authenticated = true;
         request.session.issuedAt = Date.now();
         request.session.accountId = account.id;
@@ -44,7 +48,7 @@ export default async function apiController(fastify, options) {
         });
       } else {
         await request.session.destroy();
-        reply.code(401).send(new Error("Invalid password"));
+        reply.code(401).send(new Error("Invalid credentials"));
       }
     } catch (error) {
       await request.session.destroy();
@@ -52,26 +56,55 @@ export default async function apiController(fastify, options) {
     }
   });
 
-  /**
-   * Authenticated endpoints
-   */
-  fastify.register(async (fastify) => {
-    /**
-     * Check if user is logged in and if the cookie needs to be renewed
-     */
-    fastify.addHook("preHandler", async (request, reply) => {
-      if (!request.session.authenticated) {
-        reply.code(401).send(new Error("Please log in"));
-      } else if (
-        request.session.issuedAt + options.apiEnv.cookieMaxAge / 2 >
-        Date.now()
-      ) {
-        // Renew the cookie's `expires` value
-        request.session.touch();
-      }
-    });
+  fastify.register(authenticatedEndpoints, {
+    apiEnv: { cookieMaxAge: options.apiEnv.cookieMaxAge },
+  });
+}
 
-    fastify.post("/event", async (request, reply) => {
+/**
+ * @param {FastifyInstance} fastify  Encapsulated Fastify Instance
+ * @param {Object} options plugin options, refer to https://www.fastify.io/docs/latest/Reference/Plugins/#plugin-options
+ */
+async function authenticatedEndpoints(fastify, options) {
+  const sseEvents = new EventEmitter();
+  // Account IDs mapped to IDs of connected clients
+  const clients = new Map();
+
+  // Ensure streams get closed gracefully
+  // See: https://github.com/fastify/fastify-websocket/issues/45
+  const signals = ["SIGINT", "SIGTERM"];
+  signals.forEach((signal) => {
+    process.once(signal, () => {
+      fastify.log.info(
+        { signal: signal },
+        "received termination signal and close streams"
+      );
+
+      clients.forEach((v) => {
+        v.forEach((clientId) => {
+          sseEvents.emit(clientId, "close");
+        });
+      });
+    });
+  });
+
+  /**
+   * Check if user is logged in and if the cookie needs to be renewed
+   */
+  fastify.addHook("preHandler", async (request, reply) => {
+    if (!request.session.authenticated) {
+      reply.code(401).send(new Error("Please log in"));
+    } else if (
+      request.session.issuedAt + options.apiEnv.cookieMaxAge / 2 >
+      Date.now()
+    ) {
+      // Renew the cookie's `expires` value
+      request.session.touch();
+    }
+  });
+
+  fastify.post("/event", async (request, reply) => {
+    try {
       if (request.body.type === "editNote") {
         fastify.db
           .prepare(
@@ -91,44 +124,94 @@ export default async function apiController(fastify, options) {
             request.session.accountId
           );
       } else {
-        try {
-          fastify.db
-            .prepare(
-              `INSERT INTO message_events (message_id, sent_at, received_at, type, data, from_account)
+        fastify.db
+          .prepare(
+            `INSERT INTO message_events (message_id, sent_at, received_at, type, data, from_account)
                 VALUES (?, ?, ?, ?, ?, ?)`
-            )
-            .run(
-              request.body.id,
-              request.body.sentAt,
-              Date.now(),
-              request.body.type,
-              request.body.data,
-              request.session.accountId
-            );
-        } catch (error) {
-          reply.code(400).send(new Error("Invalid request body"));
-        }
+          )
+          .run(
+            request.body.id,
+            request.body.sentAt,
+            Date.now(),
+            request.body.type,
+            request.body.data,
+            request.session.accountId
+          );
       }
-    });
 
-    fastify.get("/sync", async (request) => {
-      const notesToSync = fastify.db
-        .prepare(
-          `SELECT * FROM notes WHERE from_account = ? AND received_at >= ?`
-        )
-        .all(request.session.accountId, request.query.lastSync);
+      // Emit SSE event
+      const connectedClients = clients.get(request.session.accountId);
+      if (Array.isArray(connectedClients) && connectedClients.length) {
+        connectedClients.forEach((clientId) => {
+          sseEvents.emit(clientId, request.body);
+        });
+      }
+    } catch (error) {
+      reply.code(400).send(new Error("Invalid request body"));
+    }
+  });
 
-      const messageEventsToSync = fastify.db
-        .prepare(
-          `SELECT * FROM message_events WHERE from_account = ? AND received_at >= ?`
-        )
-        .all(request.session.accountId, request.query.lastSync);
+  fastify.get("/sync", async (request) => {
+    const notesToSync = fastify.db
+      .prepare(
+        `SELECT * FROM notes WHERE from_account = ? AND received_at >= ?`
+      )
+      .all(request.session.accountId, request.query.lastSync);
 
-      return { notes: notesToSync, messages: messageEventsToSync };
-    });
+    const messageEventsToSync = fastify.db
+      .prepare(
+        `SELECT * FROM message_events WHERE from_account = ? AND received_at >= ?`
+      )
+      .all(request.session.accountId, request.query.lastSync);
 
-    fastify.get("/listen", async (request) => {
-      // TODO
+    return { notes: notesToSync, messages: messageEventsToSync };
+  });
+
+  fastify.get("/listen", async (request, reply) => {
+    reply.raw.setHeader("Content-Type", "text/event-stream");
+    reply.raw.setHeader("Connection", "keep-alive");
+    reply.raw.setHeader("Cache-Control", "no-cache,no-transform");
+    reply.raw.setHeader("x-no-compression", 1);
+    reply.raw.write("retry: 5000\n\n");
+
+    // Send keep-alive event every 30 seconds
+    const intervalHandler = setInterval(
+      () => reply.raw.write(`: ${Date.now()}\n\n`),
+      30000
+    );
+
+    // Add the client to the connected clients list
+    const clientId = request.id;
+    const accountId = request.session.accountId;
+    let connectedClients = clients.get(accountId);
+    if (Array.isArray(connectedClients) && connectedClients.length) {
+      connectedClients.push(clientId);
+    } else {
+      clients.set(accountId, [clientId]);
+    }
+    const removeClient = () => {
+      clients.set(
+        accountId,
+        clients.get(accountId).filter((presentId) => presentId !== clientId)
+      );
+    };
+
+    // Listen for new events
+    const listener = (data) => {
+      if (data === "close") {
+        reply.raw.end();
+      } else {
+        reply.raw.write(`data: ${JSON.stringify(data)}\n\n`);
+      }
+    };
+    sseEvents.on(clientId, listener);
+
+    // Clean up the connection
+    reply.raw.on("close", () => {
+      sseEvents.removeListener(clientId, listener);
+      clearInterval(intervalHandler);
+      removeClient();
+      fastify.log.info({ clientId }, "cleaned up SSE connection");
     });
   });
 }
