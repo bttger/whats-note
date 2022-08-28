@@ -13,11 +13,20 @@ In the root directory, run `npm ci --workspaces`.
 ### Run the API server
 
 ```
-# Set the environment variables first
+# Navigate to the backend/src dir and set the
+# environment variables before starting the server
+COOKIE_SECRET=xxx node index.js
+
+# If you start the server through the npm script,
+# you won't be able to gracefully shutdown the server
 npm run start --workspace backend
 ```
 
 ### Run the Vite dev server
+
+```
+npm run dev --workspace frontend
+```
 
 ### Build the SPA
 
