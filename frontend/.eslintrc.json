@@ -3,7 +3,6 @@
     "browser": true,
     "es6": true
   },
-  "parser": "babel-eslint",
   "parserOptions": {
     "ecmaVersion": 2019,
     "sourceType": "module"
@@ -17,7 +16,7 @@
   "overrides": [
     {
       "files": [
-        "**/*.svelte"
+        "*.svelte"
       ],
       "processor": "svelte3/svelte3"
     }
