@@ -4,7 +4,7 @@
   line-height: 20px;
   font-weight: 400;
 
-  color: rgba(255, 255, 255, 0.95);
+  color: rgba(255, 255, 255, 0.9);
   background-color: black;
 
   font-synthesis: none;
@@ -12,4 +12,35 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+}
+
+.button {
+  color: #1a1a1a;
+  cursor: pointer;
+  text-align: center;
+  background: silver;
+  box-shadow: inset -1px -1px #434343, inset 1px 1px #fff, inset -2px -2px grey,
+    inset 2px 2px #dfdfdf;
+  min-width: 2.5rem;
+  user-select: none;
+}
+
+.button:hover {
+  background: grey;
+}
+
+.focused {
+  background: grey;
+}
+
+.block {
+  display: block;
+}
+
+.inline-block {
+  display: inline-block;
 }

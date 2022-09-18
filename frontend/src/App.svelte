@@ -11,12 +11,12 @@
 
 <main>
   {#if openPage === 0}
-    <Home />
+    <Home on:open-page={(e) => (openPage = e.detail)} />
   {:else if openPage === 1}
-    <Settings />
+    <Settings on:open-page={(e) => (openPage = e.detail)} />
   {:else if openPage === 2}
-    <Login />
+    <Login on:open-page={(e) => (openPage = e.detail)} />
   {:else if openPage === 3}
-    <Register />
+    <Register on:open-page={(e) => (openPage = e.detail)} />
   {/if}
 </main>

@@ -6,7 +6,7 @@ body {
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
-.container {
+.full-height-container {
   display: flex;
   flex-flow: column;
   height: 100vh;
