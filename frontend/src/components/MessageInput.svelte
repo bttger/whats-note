@@ -18,13 +18,13 @@
   // Allow sending a message without a tag only on second click on the send button
   let sendClickCounter = 0;
 
-  function postMsg() {
+  function postMsg(tagIndex) {
     if (!inputEl.innerHTML) {
       return;
     }
     dispatch("post-msg", {
       text: inputEl.innerHTML,
-      tag: tags[tags.length - selectedTag],
+      tag: tags[tagIndex],
     });
     inputEl.innerHTML = "";
   }
@@ -120,8 +120,11 @@
     bind:this={sendButtonEl}
     class="button send-button"
     tabindex="0"
-    on:click={() => {
-      if (sendClickCounter === 1) {
+    on:click={(e) => {
+      if (e.target.attributes["data-tag-index"]) {
+        postMsg(parseInt(e.target.attributes["data-tag-index"].value));
+        focusInputField();
+      } else if (sendClickCounter === 1) {
         postMsg();
         focusInputField();
       } else {
@@ -130,7 +133,11 @@
     }}
     on:keyup={(e) => {
       if (e.key === "Enter") {
-        postMsg();
+        if (e.target.attributes["data-tag-index"]) {
+          postMsg(parseInt(e.target.attributes["data-tag-index"].value));
+        } else {
+          postMsg();
+        }
         focusInputField();
       }
     }}
@@ -141,12 +148,12 @@
     <span>&gt;</span>
 
     <div bind:this={tagSelectionEl} class="tag-selection">
-      {#each tags as tag (tag.id)}
+      {#each tags as tag, index (tag.id)}
         <div
           id="msg-tag-{tag.id}"
+          data-tag-index={index}
           class="button btn-spacing send-button"
           tabindex="0"
-          on:click={() => postMsg(tag)}
         >
           {tag.name}
         </div>
