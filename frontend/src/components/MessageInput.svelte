@@ -12,22 +12,12 @@
   const tags = [
     { id: 2394, name: "To do", color: "#923" },
     { id: 8274, name: "Read", color: "#228" },
+    { id: 23494, name: "Work", color: "#923" },
+    { id: 82734, name: "Remember", color: "#228" },
+    { id: 52734, name: "Buy", color: "#228" },
   ];
-  // Keeps track of the selected tag (or no tag if selectedTag == 0)
-  let selectedTag = 0;
-  // Allow sending a message without a tag only on second click on the send button
-  let sendClickCounter = 0;
-
-  function postMsg(tagIndex) {
-    if (!inputEl.innerHTML) {
-      return;
-    }
-    dispatch("post-msg", {
-      text: inputEl.innerHTML,
-      tag: tags[tagIndex],
-    });
-    inputEl.innerHTML = "";
-  }
+  // Keeps track of the focused tag (or no tag if focusedTag == 0)
+  let focusedTag = 0;
 
   function showTagSelection() {
     tagSelectionEl.style.display = "flex";
@@ -43,25 +33,25 @@
 
   function hideTagSelection() {
     tagSelectionEl.style.display = "";
+    focusedTag = 0;
   }
 
-  function checkIfSendButtonFocused(event) {
+  function checkHidingTagButtons(event) {
     if (
       !event.relatedTarget ||
-      !event.relatedTarget.className.split(" ").includes("send-button")
+      !event.relatedTarget.className.split(" ").includes("show-tag-buttons")
     ) {
       hideTagSelection();
-      resetState();
     }
   }
 
   function moveSendButtonFocus(event) {
     // Move through the tags with arrow keys
     if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
-      if (selectedTag + 1 > tags.length) {
-        selectedTag = 0;
+      if (focusedTag + 1 > tags.length) {
+        focusedTag = 0;
       } else {
-        selectedTag++;
+        focusedTag++;
       }
     }
     if (
@@ -69,18 +59,18 @@
       event.key === "ArrowRight" ||
       event.key === "Tab"
     ) {
-      event.preventDefault();
-      if (selectedTag - 1 < 0) {
-        selectedTag = tags.length;
+      event.preventDefault(); // For the tab key
+      if (focusedTag - 1 < 0) {
+        focusedTag = tags.length;
       } else {
-        selectedTag--;
+        focusedTag--;
       }
     }
 
     // Focus the actual DOM element
-    if (selectedTag !== 0) {
+    if (focusedTag !== 0) {
       document
-        .getElementById("msg-tag-" + tags[tags.length - selectedTag].id)
+        .getElementById("msg-tag-" + tags[tags.length - focusedTag].id)
         .focus();
     } else {
       sendButtonEl.focus();
@@ -94,19 +84,40 @@
 
   function focusInputField() {
     inputEl.focus();
-    resetState();
+    focusedTag = 0;
   }
 
-  function resetState() {
-    selectedTag = 0;
-    sendClickCounter = 0;
+  function registerPostMessageEvent(event) {
+    if (event.target.attributes["data-tag-index"]) {
+      postMsg(parseInt(event.target.attributes["data-tag-index"].value));
+    } else {
+      postMsg();
+    }
+    focusInputField();
+  }
+
+  function postMsg(tagIndex) {
+    if (!inputEl.innerHTML) {
+      return;
+    }
+    dispatch("post-msg", {
+      text: inputEl.innerHTML,
+      tag: tags[tagIndex],
+    });
+    inputEl.innerHTML = "";
   }
 </script>
 
-<div class="message-input">
+<svelte:window
+  on:resize={() => {
+    if (tagSelectionEl.style.display === "flex") showTagSelection();
+  }}
+/>
+
+<div class="message-input" on:focusout={checkHidingTagButtons}>
   <div
     bind:this={inputEl}
-    class="input-div"
+    class="input-div show-tag-buttons"
     contenteditable="true"
     on:paste={(e) => pasteAsPlainText(e)}
     on:keydown={(e) => {
@@ -114,35 +125,21 @@
         insertLineBreak();
       }
     }}
+    on:focus={showTagSelection}
   />
 
   <div
     bind:this={sendButtonEl}
-    class="button send-button"
+    class="button show-tag-buttons"
     tabindex="0"
     on:click={(e) => {
-      if (e.target.attributes["data-tag-index"]) {
-        postMsg(parseInt(e.target.attributes["data-tag-index"].value));
-        focusInputField();
-      } else if (sendClickCounter === 1) {
-        postMsg();
-        focusInputField();
-      } else {
-        sendClickCounter++;
-      }
+      registerPostMessageEvent(e);
     }}
     on:keyup={(e) => {
       if (e.key === "Enter") {
-        if (e.target.attributes["data-tag-index"]) {
-          postMsg(parseInt(e.target.attributes["data-tag-index"].value));
-        } else {
-          postMsg();
-        }
-        focusInputField();
+        registerPostMessageEvent(e);
       }
     }}
-    on:focus={showTagSelection}
-    on:focusout={checkIfSendButtonFocused}
     on:keydown={moveSendButtonFocus}
   >
     <span>&gt;</span>
@@ -152,7 +149,7 @@
         <div
           id="msg-tag-{tag.id}"
           data-tag-index={index}
-          class="button btn-spacing send-button"
+          class="button button-padding show-tag-buttons"
           tabindex="0"
         >
           {tag.name}
@@ -192,11 +189,10 @@
     top: 0;
     left: 0;
     display: none;
-    flex-direction: column;
     gap: 0.5rem;
   }
 
-  .btn-spacing {
-    padding: 0 0.5rem 0 0.5rem;
+  .button-padding {
+    padding: 0 0.2rem 0 0.2rem;
   }
 </style>
