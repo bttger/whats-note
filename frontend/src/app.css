@@ -29,10 +29,6 @@ body {
   user-select: none;
 }
 
-.button:hover {
-  background: grey;
-}
-
 .focused {
   background: grey;
 }
