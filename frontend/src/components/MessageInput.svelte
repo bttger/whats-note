@@ -10,11 +10,11 @@
   let tagSelectionEl;
 
   const tags = [
-    { id: 2394, name: "To do", color: "#923" },
-    { id: 8274, name: "Read", color: "#228" },
-    { id: 23494, name: "Work", color: "#923" },
-    { id: 82734, name: "Remember", color: "#228" },
-    { id: 52734, name: "Buy", color: "#228" },
+    { id: 1, name: "To do", color: "#881337" },
+    { id: 2, name: "Read", color: "#713f12" },
+    { id: 3, name: "Work", color: "#4c1d95" },
+    { id: 4, name: "Remember", color: "#1e3a8a" },
+    { id: 5, name: "Buy", color: "#14532d" },
   ];
   // Keeps track of the focused tag (or no tag if focusedTag == 0)
   let focusedTag = 0;
@@ -151,6 +151,7 @@
           data-tag-index={index}
           class="button button-padding show-tag-buttons"
           tabindex="0"
+          style="background-color: {tag.color}; color: #e3e3e3;"
         >
           {tag.name}
         </div>

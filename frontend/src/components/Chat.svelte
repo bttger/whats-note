@@ -3,9 +3,28 @@
   import MessageInput from "./MessageInput.svelte";
 
   const displayerMessages = [
-    { id: 38, text: "jhgdf", sentAt: 723894, checked: false },
+    {
+      id: 38,
+      text: "jhgdf",
+      sentAt: 723894,
+      checked: false,
+      tag: { id: 2, name: "Read", color: "#713f12" },
+    },
     {
       id: 28,
+      text: "jhgdfmn sjh wih ihb wbiewb iwbf iebw ibe ihb ei beifbf",
+      sentAt: 723894,
+      checked: true,
+      tag: { id: 5, name: "Buy", color: "#14532d" },
+    },
+    {
+      id: 283,
+      text: "jhgdfmn sjh wih ihb wbiewb iwbf iebw ibe ihb ei beifbf",
+      sentAt: 723894,
+      checked: true,
+    },
+    {
+      id: 284,
       text: "jhgdfmn sjh wih ihb wbiewb iwbf iebw ibe ihb ei beifbf",
       sentAt: 723894,
       checked: false,

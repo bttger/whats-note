@@ -18,7 +18,18 @@
     checked={message.checked}
     on:change={(e) => checkOffMsg(e)}
   />
-  <div class="message" class:checked={message.checked}>
+  <div
+    class="message"
+    style={message.tag
+      ? message.checked
+        ? "filter: brightness(0.5); background-color: " +
+          message.tag.color +
+          ";"
+        : "background-color: " + message.tag.color + ";"
+      : message.checked
+      ? "filter: brightness(0.5);"
+      : ""}
+  >
     <div>
       {message.text}
     </div>
@@ -51,11 +62,6 @@
     color: #ababab;
     font-size: 0.7rem;
     align-self: end;
-  }
-
-  .checked {
-    background: #1a1a1a;
-    color: #ababab;
   }
 
   input[type="checkbox"] {
