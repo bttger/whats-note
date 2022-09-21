@@ -41,3 +41,7 @@ body {
   flex: 1;
   overflow: auto;
 }
+
+h1 {
+  font-size: 1.5rem;
+}

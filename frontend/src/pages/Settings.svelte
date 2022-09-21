@@ -2,6 +2,15 @@
   import { createEventDispatcher } from "svelte";
 
   const dispatch = createEventDispatcher();
+
+  async function logout() {
+    try {
+      await fetch("/api/logout");
+      dispatch("open-page", 2);
+    } catch (error) {
+      console.error(error);
+    }
+  }
 </script>
 
 <div class="full-height-container">
@@ -12,7 +21,10 @@
   <p>Message Tags</p>
   <p>Number of Scratchpads</p>
   <hr />
-  <div class="button block" style="margin-bottom: 0.5rem">Log out</div>
+  <!-- TODO insert links to github repo and how to involve in the project or suggest improvements -->
+  <div class="button block" style="margin-bottom: 0.5rem" on:click={logout}>
+    Log out
+  </div>
   <div class="button block">Delete account and data</div>
 </div>
 
