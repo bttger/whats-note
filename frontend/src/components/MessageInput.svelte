@@ -149,9 +149,9 @@
         <div
           id="msg-tag-{tag.id}"
           data-tag-index={index}
-          class="button button-padding show-tag-buttons"
+          class="button tag-button show-tag-buttons"
           tabindex="0"
-          style="background-color: {tag.color}; color: #e3e3e3;"
+          style="background-color: {tag.color}"
         >
           {tag.name}
         </div>
@@ -193,7 +193,8 @@
     gap: 0.5rem;
   }
 
-  .button-padding {
+  .tag-button {
     padding: 0 0.2rem 0 0.2rem;
+    color: #e3e3e3;
   }
 </style>

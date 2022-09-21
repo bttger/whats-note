@@ -29,14 +29,15 @@ body {
   user-select: none;
 }
 
-.focused {
-  background: grey;
-}
-
 .block {
   display: block;
 }
 
 .inline-block {
   display: inline-block;
+}
+
+.filler-container {
+  flex: 1;
+  overflow: auto;
 }

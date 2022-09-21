@@ -33,4 +33,8 @@
   .tab {
     flex: 1 1 0;
   }
+
+  .focused {
+    background: grey;
+  }
 </style>

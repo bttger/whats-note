@@ -34,6 +34,18 @@
   function checkOffMsg(detail) {
     // TODO
   }
+
+  function deleteMsg(detail) {
+    // TODO
+  }
+
+  function editMsg(detail) {
+    // TODO
+  }
+
+  function sendMsg(detail) {
+    // TODO
+  }
 </script>
 
 <div class="filler-container">
@@ -44,10 +56,3 @@
 </div>
 
 <MessageInput on:post-msg={(e) => console.log(e)} />
-
-<style>
-  .filler-container {
-    flex: 1;
-    overflow: auto;
-  }
-</style>
