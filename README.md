@@ -28,6 +28,12 @@ npm run start --workspace backend
 npm run dev --workspace frontend
 ```
 
+### Run a reverse proxy
+
+```
+docker run --rm --network host --name caddy -v $PWD/Caddyfile:/etc/caddy/Caddyfile caddy
+```
+
 ### Build the SPA
 
 ### Update

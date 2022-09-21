@@ -1,0 +1,9 @@
+:5174 {
+	handle /api* {
+		reverse_proxy :3000
+	}
+
+	handle {
+		reverse_proxy :5173
+	}
+}
