@@ -24,9 +24,8 @@ export default async function apiController(fastify, options) {
     reply.code(201).send({ email: request.body.email, registeredAt });
   });
 
-  fastify.get("/logout", async (request, reply) => {
+  fastify.get("/logout", async (request) => {
     await request.session.destroy();
-    reply.redirect("/");
   });
 
   fastify.post("/login", async (request, reply) => {
