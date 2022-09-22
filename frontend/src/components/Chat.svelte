@@ -31,28 +31,33 @@
     },
   ];
 
-  function checkOffMsg(detail) {
-    // TODO
+  function checkMsg(detail) {
+    console.log(detail);
   }
 
-  function deleteMsg(detail) {
-    // TODO
+  function deleteMsg(message) {
+    console.log(message);
   }
 
-  function editMsg(detail) {
-    // TODO
+  function editMsg(message) {
+    console.log(message);
   }
 
-  function sendMsg(detail) {
-    // TODO
+  function postMsg(message) {
+    console.log(message);
   }
 </script>
 
 <div class="filler-container">
   {#each displayerMessages as message (message.id)}
-    <MessageRow {message} on:check-off-msg={(e) => checkOffMsg(e.detail)} />
+    <MessageRow
+      {message}
+      on:check-msg={(e) => checkMsg(e.detail)}
+      on:edit-msg={(e) => editMsg(e.detail)}
+      on:delete-msg={(e) => deleteMsg(e.detail)}
+    />
   {/each}
   <div id="message-container-end" style="height: 1px; margin-top: -1px" />
 </div>
 
-<MessageInput on:post-msg={(e) => console.log(e)} />
+<MessageInput on:post-msg={(e) => postMsg(e.detail)} />

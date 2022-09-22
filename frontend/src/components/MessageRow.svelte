@@ -1,12 +1,32 @@
 <script>
   import { createEventDispatcher } from "svelte";
+  import { computePosition, flip } from "@floating-ui/dom";
 
   const dispatch = createEventDispatcher();
 
   export let message;
+  let messageEl;
+  let actionsEl;
 
   function checkOffMsg(event) {
-    dispatch("check-off-msg", { message, checked: event.target.checked });
+    dispatch("check-msg", { message, checked: event.target.checked });
+  }
+
+  function showMessageActions() {
+    actionsEl.style.display = "flex";
+    computePosition(messageEl, actionsEl, {
+      placement: "top",
+      middleware: [flip()],
+    }).then(({ x, y }) => {
+      Object.assign(actionsEl.style, {
+        left: `${x}px`,
+        top: `${y}px`,
+      });
+    });
+  }
+
+  function hideMessageActions() {
+    actionsEl.style.display = "";
   }
 </script>
 
@@ -19,6 +39,7 @@
     on:change={(e) => checkOffMsg(e)}
   />
   <div
+    bind:this={messageEl}
     class="message"
     style={message.tag
       ? message.checked
@@ -29,6 +50,10 @@
       : message.checked
       ? "filter: brightness(0.5);"
       : ""}
+    on:click={() =>
+      actionsEl.style.display === "flex"
+        ? hideMessageActions()
+        : showMessageActions()}
   >
     <div>
       {message.text}
@@ -37,6 +62,32 @@
       {new Date(message.sentAt).toLocaleString() +
         (message.unsynced ? " ▴" : " ✓")}
     </span>
+  </div>
+  <div
+    bind:this={actionsEl}
+    class="message-actions"
+    style={message.tag
+      ? "background-color: " + message.tag.color
+      : "background-color: #2c2c2c"}
+  >
+    <div
+      class="button"
+      on:click={() => {
+        hideMessageActions();
+        dispatch("edit-msg", message);
+      }}
+    >
+      Edit
+    </div>
+    <div
+      class="button"
+      on:click={() => {
+        hideMessageActions();
+        dispatch("delete-msg", message);
+      }}
+    >
+      Delete
+    </div>
   </div>
 </div>
 
@@ -68,5 +119,14 @@
     padding: 0;
     margin: 0;
     cursor: pointer;
+  }
+
+  .message-actions {
+    position: absolute;
+    display: none;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    z-index: 50;
   }
 </style>

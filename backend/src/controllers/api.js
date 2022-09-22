@@ -105,6 +105,7 @@ async function authenticatedEndpoints(fastify, options) {
   fastify.post("/event", async (request, reply) => {
     try {
       if (request.body.type === "editNote") {
+        // Some note related event
         fastify.db
           .prepare(
             `INSERT INTO notes (id, last_edit, received_at, data, from_account)
@@ -123,6 +124,7 @@ async function authenticatedEndpoints(fastify, options) {
             request.session.accountId
           );
       } else {
+        // Some message related event
         fastify.db
           .prepare(
             `INSERT INTO message_events (message_id, sent_at, received_at, type, data, from_account)
