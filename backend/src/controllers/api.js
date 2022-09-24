@@ -163,17 +163,22 @@ async function authenticatedEndpoints(fastify, options) {
   fastify.get("/sync", async (request) => {
     const notesToSync = fastify.db
       .prepare(
-        `SELECT * FROM notes WHERE from_account = ? AND received_at >= ?`
+        `SELECT id, last_edit AS lastEdit, data
+          FROM notes
+          WHERE from_account = ? AND received_at >= ?`
       )
       .all(request.session.accountId, request.query.lastSync);
 
-    const messageEventsToSync = fastify.db
+    const chatEventsToSync = fastify.db
       .prepare(
-        `SELECT * FROM message_events WHERE from_account = ? AND received_at >= ?`
+        `SELECT message_id AS messageId, sent_at AS sentAt, type, data
+          FROM chat_events
+          WHERE from_account = ? AND received_at >= ?
+          ORDER BY sent_at`
       )
       .all(request.session.accountId, request.query.lastSync);
 
-    return { notes: notesToSync, messages: messageEventsToSync };
+    return { notes: notesToSync, chatEvents: chatEventsToSync };
   });
 
   fastify.get("/listen", async (request, reply) => {

@@ -1,35 +1,8 @@
 <script>
   import MessageRow from "./MessageRow.svelte";
   import MessageInput from "./MessageInput.svelte";
-
-  const displayerMessages = [
-    {
-      id: 38,
-      text: "jhgdf",
-      sentAt: 723894,
-      checked: false,
-      tag: { id: 2, name: "Read", color: "#713f12" },
-    },
-    {
-      id: 28,
-      text: "jhgdfmn sjh wih ihb wbiewb iwbf iebw ibe ihb ei beifbf",
-      sentAt: 723894,
-      checked: true,
-      tag: { id: 5, name: "Buy", color: "#14532d" },
-    },
-    {
-      id: 283,
-      text: "jhgdfmn sjh wih ihb wbiewb iwbf iebw ibe ihb ei beifbf",
-      sentAt: 723894,
-      checked: true,
-    },
-    {
-      id: 284,
-      text: "jhgdfmn sjh wih ihb wbiewb iwbf iebw ibe ihb ei beifbf",
-      sentAt: 723894,
-      checked: false,
-    },
-  ];
+  import { store } from "../lib/store.js";
+  import { onMount } from "svelte";
 
   function checkMsg(detail) {
     console.log(detail);
@@ -46,10 +19,14 @@
   function postMsg(message) {
     console.log(message);
   }
+
+  onMount(() => {
+    store.loadShownMessages(50);
+  });
 </script>
 
 <div class="filler-container">
-  {#each displayerMessages as message (message.id)}
+  {#each $store.shownMessages as message (message.id)}
     <MessageRow
       {message}
       on:check-msg={(e) => checkMsg(e.detail)}

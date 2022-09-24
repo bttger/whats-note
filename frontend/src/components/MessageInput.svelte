@@ -103,6 +103,7 @@
     dispatch("post-msg", {
       text: inputEl.innerHTML,
       tag: tags[tagIndex],
+      checked: false,
     });
     inputEl.innerHTML = "";
   }

@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS accounts (
   registered_at INTEGER
 ) STRICT;
 
-CREATE TABLE IF NOT EXISTS message_events (
+CREATE TABLE IF NOT EXISTS chat_events (
   id INTEGER PRIMARY KEY,
   message_id TEXT,
   sent_at INTEGER,
