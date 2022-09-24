@@ -102,53 +102,61 @@ async function authenticatedEndpoints(fastify, options) {
     }
   });
 
-  fastify.post("/event", async (request, reply) => {
-    try {
-      if (request.body.type === "editNote") {
-        // Some note related event
-        fastify.db
-          .prepare(
-            `INSERT INTO notes (id, last_edit, received_at, data, from_account)
+  fastify.post("/events", async (request, reply) => {
+    const insertNewEvent = (body) => {
+      try {
+        if (body.type === "editNote") {
+          // Some note related event
+          fastify.db
+            .prepare(
+              `INSERT INTO notes (id, last_edit, received_at, data, from_account)
             VALUES (?, ?, ?, ?, ?)
             ON CONFLICT DO UPDATE SET
                 data = excluded.data,
                 last_edit = excluded.last_edit,
                 received_at = excluded.received_at
             WHERE id = excluded.id AND from_account = excluded.from_account`
-          )
-          .run(
-            request.body.id,
-            request.body.sentAt,
-            Date.now(),
-            request.body.data,
-            request.session.accountId
-          );
-      } else {
-        // Some message related event
-        fastify.db
-          .prepare(
-            `INSERT INTO message_events (message_id, sent_at, received_at, type, data, from_account)
+            )
+            .run(
+              body.id,
+              body.sentAt,
+              Date.now(),
+              body.data,
+              request.session.accountId
+            );
+        } else {
+          // Some chat related event
+          fastify.db
+            .prepare(
+              `INSERT INTO chat_events (message_id, sent_at, received_at, type, data, from_account)
                 VALUES (?, ?, ?, ?, ?, ?)`
-          )
-          .run(
-            request.body.id,
-            request.body.sentAt,
-            Date.now(),
-            request.body.type,
-            request.body.data,
-            request.session.accountId
-          );
-      }
+            )
+            .run(
+              body.id,
+              body.sentAt,
+              Date.now(),
+              body.type,
+              body.data,
+              request.session.accountId
+            );
+        }
 
-      // Emit SSE event
-      const connectedClients = clients.get(request.session.accountId);
-      if (Array.isArray(connectedClients) && connectedClients.length) {
-        connectedClients.forEach((clientId) => {
-          sseEvents.emit(clientId, request.body);
-        });
+        // Emit SSE event
+        const connectedClients = clients.get(request.session.accountId);
+        if (Array.isArray(connectedClients) && connectedClients.length) {
+          connectedClients.forEach((clientId) => {
+            sseEvents.emit(clientId, body);
+          });
+        }
+      } catch (error) {
+        reply.code(400).send(new Error("Invalid request body"));
       }
-    } catch (error) {
-      reply.code(400).send(new Error("Invalid request body"));
+    };
+
+    if (Array.isArray(request.body)) {
+      request.body.forEach((e) => insertNewEvent(e));
+    } else {
+      insertNewEvent(request.body);
     }
   });
 
