@@ -52,6 +52,7 @@ export async function openDB() {
        *   id: number;
        *   lastEdit: number; // Unix milliseconds
        *   data: NoteData;
+       *   unsynced?: boolean;
        * }
        *
        * interface NoteData {
@@ -64,6 +65,24 @@ export async function openDB() {
       notesStore.createIndex("unsynced", "unsynced");
     },
   });
+}
+
+export async function selectUnsyncedEvents(db) {
+  const events = await db.getAll("unsyncedChatEvents");
+  const unsyncedNotes = await db.getAllFromIndex("notes", "unsynced");
+  events.concat(
+    unsyncedNotes.map((n) => ({
+      type: "editNote",
+      id: n.id,
+      sentAt: n.lastEdit,
+      data: n.data,
+    }))
+  );
+  return events;
+}
+
+export async function insertUnsyncedChatEvent(db, chatEvent) {
+  await db.put("unsyncedChatEvents", chatEvent);
 }
 
 export async function selectMessages(db, count) {
@@ -80,20 +99,6 @@ export async function selectMessages(db, count) {
   }
 
   return messages;
-}
-
-export async function selectUnsyncedEvents(db) {
-  const events = await db.getAll("unsyncedChatEvents");
-  const unsyncedNotes = await db.getAllFromIndex("notes", "unsynced");
-  events.concat(
-    unsyncedNotes.map((n) => ({
-      type: "editNote",
-      id: n.id,
-      sentAt: n.lastEdit,
-      data: n.data,
-    }))
-  );
-  return events;
 }
 
 async function updateMessage(db, id, partialMessageObj) {

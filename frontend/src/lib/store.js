@@ -1,6 +1,7 @@
 import { writable } from "svelte/store";
 import {
   applyChatEvents,
+  insertUnsyncedChatEvent,
   openDB,
   selectMessages,
   selectNote,
@@ -8,7 +9,7 @@ import {
 } from "./idb.js";
 
 function createClientDataStore() {
-  const { subscribe, update } = writable({
+  const store = writable({
     shownMessages: [],
     shownNote: null,
     messageCount: 0,
@@ -20,10 +21,11 @@ function createClientDataStore() {
       return db;
     }
     db = await openDB();
+    return db;
   }
 
   return {
-    subscribe,
+    ...store,
     getLastSync: () => {
       let lastSync = parseInt(window.localStorage.getItem("lastSync"));
       if (!lastSync) {
@@ -47,18 +49,25 @@ function createClientDataStore() {
     syncChatEvents: async (chatEvents) => {
       await applyChatEvents(await getDB(), chatEvents);
     },
-    addUnsyncedChatEvent: async (chatEvent) => {
+    async sendChatEvent(chatEvent) {
+      await this.syncChatEvents([chatEvent]);
+      await insertUnsyncedChatEvent(await getDB(), chatEvent);
+      const unsyncedEvents = await this.getUnsyncedEvents();
+      store.update((s) => {
+        s.unsyncedEvents = unsyncedEvents;
+      });
       // wenn der client eine neue msg sendet, ruft er sync und dann add auf
       // dann wird getUnsyncedEvents aufgerufen, um die events zu posten
       // wenn erfolgreich, werden die bestimmten events aus der db gelöscht
     },
     loadShownMessages: async (count) => {
-      update(async (store) => {
-        if (store.messageCount !== count) {
-          store.messageCount = count;
-          store.shownMessages = await selectMessages(await getDB(), count);
+      const loadedMessages = await selectMessages(await getDB(), count);
+      store.update((s) => {
+        if (s.messageCount !== count) {
+          s.messageCount = count;
+          s.shownMessages = loadedMessages;
         }
-        return store;
+        return s;
       });
     },
     getUnsyncedEvents: async () => selectUnsyncedEvents(await getDB()),
