@@ -2,22 +2,24 @@
   import MessageRow from "./MessageRow.svelte";
   import MessageInput from "./MessageInput.svelte";
   import { store } from "../lib/store.js";
-  import { onMount } from "svelte";
+  import { onMount, tick } from "svelte";
 
-  function checkMsg(detail) {
+  async function checkMsg(detail) {
     console.log(detail);
   }
 
-  function deleteMsg(message) {
+  async function deleteMsg(message) {
     console.log(message);
   }
 
-  function editMsg(message) {
+  async function editMsg(message) {
     console.log(message);
   }
 
-  function postMsg(message) {
+  async function postMsg(message) {
     console.log(message);
+    await tick();
+    document.getElementById("message-container-end").scrollIntoView();
   }
 
   onMount(() => {
