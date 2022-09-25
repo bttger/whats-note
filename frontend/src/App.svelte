@@ -33,7 +33,10 @@
       try {
         const response = await fetch("/api/events", {
           method: "POST",
-          body: unsyncedEvents,
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(unsyncedEvents),
         });
         if (!response.ok && response.status === 401) {
           openPage = 2;
