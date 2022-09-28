@@ -102,54 +102,29 @@ async function authenticatedEndpoints(fastify, options) {
     }
   });
 
-  fastify.post("/events", async (request, reply) => {
+  fastify.post("/events", async (request) => {
     const insertNewEvent = (body) => {
-      try {
-        if (body.type === "editNote") {
-          // Some note related event
-          fastify.db
-            .prepare(
-              `INSERT INTO notes (id, last_edit, received_at, data, from_account)
-            VALUES (?, ?, ?, ?, ?)
-            ON CONFLICT DO UPDATE SET
-                data = excluded.data,
-                last_edit = excluded.last_edit,
-                received_at = excluded.received_at
-            WHERE id = excluded.id AND from_account = excluded.from_account`
-            )
-            .run(
-              body.id,
-              body.sentAt,
-              Date.now(),
-              body.data,
-              request.session.accountId
-            );
-        } else {
-          // Some chat related event
-          fastify.db
-            .prepare(
-              `INSERT INTO chat_events (message_id, sent_at, received_at, type, data, from_account)
-                VALUES (?, ?, ?, ?, ?, ?)`
-            )
-            .run(
-              body.id,
-              body.sentAt,
-              Date.now(),
-              body.type,
-              body.data,
-              request.session.accountId
-            );
-        }
+      fastify.db
+        .prepare(
+          `INSERT INTO events (id, item_id, emitted_at, type, data, received_at, from_account)
+            VALUES (?, ?, ?, ?, ?, ?, ?)`
+        )
+        .run(
+          body.id,
+          body.itemId,
+          body.sentAt,
+          body.type,
+          body.data,
+          Date.now(),
+          request.session.accountId
+        );
 
-        // Emit SSE event
-        const connectedClients = clients.get(request.session.accountId);
-        if (Array.isArray(connectedClients) && connectedClients.length) {
-          connectedClients.forEach((clientId) => {
-            sseEvents.emit(clientId, body);
-          });
-        }
-      } catch (error) {
-        reply.code(400).send(new Error("Invalid request body"));
+      // Emit SSE event
+      const connectedClients = clients.get(request.session.accountId);
+      if (Array.isArray(connectedClients) && connectedClients.length) {
+        connectedClients.forEach((clientId) => {
+          sseEvents.emit(clientId, body);
+        });
       }
     };
 
@@ -161,24 +136,14 @@ async function authenticatedEndpoints(fastify, options) {
   });
 
   fastify.get("/sync", async (request) => {
-    const notesToSync = fastify.db
+    return fastify.db
       .prepare(
-        `SELECT id, last_edit AS lastEdit, data
-          FROM notes
-          WHERE from_account = ? AND received_at >= ?`
-      )
-      .all(request.session.accountId, request.query.lastSync);
-
-    const chatEventsToSync = fastify.db
-      .prepare(
-        `SELECT message_id AS messageId, sent_at AS sentAt, type, data
-          FROM chat_events
+        `SELECT id, item_id AS itemId, emitted_at AS emittedAt, type, data
+          FROM events
           WHERE from_account = ? AND received_at >= ?
-          ORDER BY sent_at`
+          ORDER BY emitted_at ASC`
       )
       .all(request.session.accountId, request.query.lastSync);
-
-    return { notes: notesToSync, chatEvents: chatEventsToSync };
   });
 
   fastify.get("/listen", async (request, reply) => {

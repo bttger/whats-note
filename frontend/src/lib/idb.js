@@ -4,24 +4,19 @@ export async function openDB() {
   return await idb.openDB("whats-note", 1, {
     upgrade(db) {
       /**
-       * interface ChatEvent {
-       *   type: "postMsg" | "deleteMsg" | "checkMsg" | "uncheckMsg" | "editMsg";
-       *   id: number; // The message ID
-       *   sentAt: number;
-       *   data: string; // JSON stringified MessageData
-       * }
-       *
-       * ### Relevant interface for the API:
        * interface Event {
+       *   id: string;
+       *   itemId: string; // Either the message or note ID that the event relates to
+       *   emittedAt: number;
        *   type: "editNote" | "postMsg" | "deleteMsg" | "checkMsg" | "uncheckMsg" | "editMsg";
-       *   id: number; // The message ID or note ID
-       *   sentAt: number; // The time when message was sent or note was last edited
-       *   data: string; // JSON stringified MessageData or NoteData
+       *   data: string; // JSON stringified event data, e.g. MessageData or NoteData
+       *   isSyncing?: boolean;
        * }
        */
-      db.createObjectStore("unsyncedChatEvents", {
-        keyPath: "sentAt",
+      const unsyncedEvents = db.createObjectStore("unsyncedEvents", {
+        keyPath: "id",
       });
+      unsyncedEvents.createIndex("isSyncing", "isSyncing");
 
       /**
        * interface Message {
@@ -52,17 +47,15 @@ export async function openDB() {
        *   id: number;
        *   lastEdit: number; // Unix milliseconds
        *   data: NoteData;
-       *   unsynced?: boolean;
        * }
        *
        * interface NoteData {
        *   text: string;
        * }
        */
-      const notesStore = db.createObjectStore("notes", {
+      db.createObjectStore("notes", {
         keyPath: "id",
       });
-      notesStore.createIndex("unsynced", "unsynced");
     },
   });
 }
