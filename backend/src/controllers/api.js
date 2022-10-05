@@ -104,6 +104,7 @@ async function authenticatedEndpoints(fastify, options) {
 
   fastify.post("/events", async (request) => {
     const insertNewEvent = (body) => {
+      // TODO if editNote event, delete the previous related event first in a tx
       fastify.db
         .prepare(
           `INSERT INTO events (id, item_id, emitted_at, type, data, received_at, from_account)

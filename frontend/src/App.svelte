@@ -8,12 +8,12 @@
   let openPage = 0;
 
   async function sync() {
+    // Get updates from the server
     try {
       const response = await fetch(`/api/sync?lastSync=${store.getLastSync()}`);
       if (response.ok) {
         const json = await response.json();
-        await store.syncNotes(json.notes);
-        await store.syncChatEvents(json.chatEvents);
+        await store.syncEventsInClientDb(json, true);
       } else if (response.status === 401) {
         openPage = 2;
       } else {
@@ -28,6 +28,7 @@
       );
     }
 
+    // Send all unsynced events
     const unsyncedEvents = await store.getUnsyncedEvents();
     if (unsyncedEvents.length) {
       try {
@@ -38,7 +39,9 @@
           },
           body: JSON.stringify(unsyncedEvents),
         });
-        if (!response.ok && response.status === 401) {
+        if (response.ok) {
+          await store.finishSendingEvents(unsyncedEvents);
+        } else if (response.status === 401) {
           openPage = 2;
         } else {
           console.error(

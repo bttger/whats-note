@@ -63,7 +63,7 @@ export async function selectUnsyncedEvents(db) {
 }
 
 export async function insertUnsyncedEvent(db, chatEvent) {
-  await db.put("unsyncedChatEvents", chatEvent);
+  await db.put("unsyncedEvents", chatEvent);
 }
 
 export async function deleteUnsyncedEvent(db, chatEventId) {
@@ -92,7 +92,13 @@ async function updateMessage(db, id, partialMessageDataObj) {
   await db.put("messages", message);
 }
 
-export async function applyEvents(db, chatEvents) {
+export async function deleteUnsyncedPropFromMessage(db, id) {
+  let message = await db.get("messages", id);
+  delete message.unsynced;
+  await db.put("messages", message);
+}
+
+export async function applyEvents(db, chatEvents, fromServer = false) {
   for (const e of chatEvents) {
     const data = e.data ? JSON.parse(e.data) : null;
     switch (e.type) {
@@ -104,15 +110,28 @@ export async function applyEvents(db, chatEvents) {
         });
         break;
       case "postMsg":
-        await db.put("messages", {
-          id: e.itemId,
-          sentAt: e.emittedAt,
-          data: {
-            text: data.text,
-            tag: data.tag,
-            checked: false,
-          },
-        });
+        if (!fromServer) {
+          await db.put("messages", {
+            id: e.itemId,
+            sentAt: e.emittedAt,
+            unsynced: true,
+            data: {
+              text: data.text,
+              tag: data.tag,
+              checked: false,
+            },
+          });
+        } else {
+          await db.put("messages", {
+            id: e.itemId,
+            sentAt: e.emittedAt,
+            data: {
+              text: data.text,
+              tag: data.tag,
+              checked: false,
+            },
+          });
+        }
         break;
       case "editMsg":
         await updateMessage(db, e.itemId, data);

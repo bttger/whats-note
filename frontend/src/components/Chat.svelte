@@ -3,6 +3,7 @@
   import MessageInput from "./MessageInput.svelte";
   import { store } from "../lib/store.js";
   import { onMount, tick } from "svelte";
+  import { nanoid } from "nanoid";
 
   async function checkMsg(detail) {
     console.log(detail);
@@ -18,6 +19,13 @@
 
   async function postMsg(message) {
     console.log(message);
+    await store.sendEvent({
+      id: nanoid(12),
+      itemId: nanoid(10),
+      emittedAt: Date.now(),
+      type: "postMsg",
+      data: JSON.stringify(message),
+    });
     await tick();
     document.getElementById("message-container-end").scrollIntoView();
   }

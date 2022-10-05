@@ -1,10 +1,11 @@
 import { writable } from "svelte/store";
 import {
-  applyChatEvents,
-  insertUnsyncedChatEvent,
+  applyEvents,
+  deleteUnsyncedEvent,
+  deleteUnsyncedPropFromMessage,
+  insertUnsyncedEvent,
   openDB,
   selectMessages,
-  selectNote,
   selectUnsyncedEvents,
 } from "./idb.js";
 
@@ -37,28 +38,22 @@ function createClientDataStore() {
     finishSync: () => {
       window.localStorage.setItem("lastSync", Date.now().toString());
     },
-    syncNotes: async (notes) => {
-      for (const note of notes) {
-        // TODO check if the lastEdit is behind the client's value and block tx
-        if (typeof note.data === "string") {
-          note.data = JSON.parse(note.data);
+    getUnsyncedEvents: async () => selectUnsyncedEvents(await getDB()),
+    syncEventsInClientDb: async (chatEvents, fromServer = false) => {
+      await applyEvents(await getDB(), chatEvents, fromServer);
+    },
+    async sendEvent(event) {
+      await this.syncEventsInClientDb([event]);
+      await insertUnsyncedEvent(await getDB(), event);
+      window.dispatchEvent(new Event("send-event"));
+    },
+    finishSendingEvents: async (events) => {
+      for (const e of events) {
+        await deleteUnsyncedEvent(await getDB(), e.id);
+        if (e.type === "postMsg") {
+          await deleteUnsyncedPropFromMessage(await getDB(), e.itemId);
         }
-        await (await getDB()).put("notes", note);
       }
-    },
-    syncChatEvents: async (chatEvents) => {
-      await applyChatEvents(await getDB(), chatEvents);
-    },
-    async sendChatEvent(chatEvent) {
-      await this.syncChatEvents([chatEvent]);
-      await insertUnsyncedChatEvent(await getDB(), chatEvent);
-      const unsyncedEvents = await this.getUnsyncedEvents();
-      store.update((s) => {
-        s.unsyncedEvents = unsyncedEvents;
-      });
-      // wenn der client eine neue msg sendet, ruft er sync und dann add auf
-      // dann wird getUnsyncedEvents aufgerufen, um die events zu posten
-      // wenn erfolgreich, werden die bestimmten events aus der db gelöscht
     },
     loadShownMessages: async (count) => {
       const loadedMessages = await selectMessages(await getDB(), count);
@@ -70,7 +65,6 @@ function createClientDataStore() {
         return s;
       });
     },
-    getUnsyncedEvents: async () => selectUnsyncedEvents(await getDB()),
   };
 }
 
