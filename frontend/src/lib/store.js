@@ -1,4 +1,4 @@
-import { writable } from "svelte/store";
+import { get, writable } from "svelte/store";
 import {
   applyEvents,
   deleteUnsyncedEvent,
@@ -44,24 +44,30 @@ function createClientDataStore() {
     },
     async sendEvent(event) {
       await this.syncEventsInClientDb([event]);
+      if (event.type === "postMsg") {
+        store.update((s) => {
+          s.messageCount = s.messageCount + 1;
+          return s;
+        });
+        await this.loadShownMessages(get(store).messageCount);
+      }
       await insertUnsyncedEvent(await getDB(), event);
       window.dispatchEvent(new Event("send-event"));
     },
-    finishSendingEvents: async (events) => {
+    async finishSendingEvents(events) {
       for (const e of events) {
         await deleteUnsyncedEvent(await getDB(), e.id);
         if (e.type === "postMsg") {
           await deleteUnsyncedPropFromMessage(await getDB(), e.itemId);
+          await this.loadShownMessages(get(store).messageCount);
         }
       }
     },
     loadShownMessages: async (count) => {
       const loadedMessages = await selectMessages(await getDB(), count);
       store.update((s) => {
-        if (s.messageCount !== count) {
-          s.messageCount = count;
-          s.shownMessages = loadedMessages;
-        }
+        s.messageCount = count;
+        s.shownMessages = loadedMessages;
         return s;
       });
     },
