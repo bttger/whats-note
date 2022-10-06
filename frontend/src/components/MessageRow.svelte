@@ -35,19 +35,19 @@
     :id="'msg-checkbox-' + message.id"
     aria-label="Check off the message"
     type="checkbox"
-    checked={message.checked}
+    checked={message.data.checked}
     on:change={(e) => checkOffMsg(e)}
   />
   <div
     bind:this={messageEl}
     class="message"
-    style={message.tag
-      ? message.checked
+    style={message.data.tag
+      ? message.data.checked
         ? "filter: brightness(0.5); background-color: " +
-          message.tag.color +
+          message.data.tag.color +
           ";"
-        : "background-color: " + message.tag.color + ";"
-      : message.checked
+        : "background-color: " + message.data.tag.color + ";"
+      : message.data.checked
       ? "filter: brightness(0.5);"
       : ""}
     on:click={() =>
@@ -56,7 +56,7 @@
         : showMessageActions()}
   >
     <div>
-      {message.text}
+      {message.data.text}
     </div>
     <span class="message-info">
       {new Date(message.sentAt).toLocaleString() +
@@ -66,8 +66,8 @@
   <div
     bind:this={actionsEl}
     class="message-actions"
-    style={message.tag
-      ? "background-color: " + message.tag.color
+    style={message.data.tag
+      ? "background-color: " + message.data.tag.color
       : "background-color: #2c2c2c"}
   >
     <div
