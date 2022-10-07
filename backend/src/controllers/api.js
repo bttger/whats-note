@@ -113,7 +113,7 @@ async function authenticatedEndpoints(fastify, options) {
         .run(
           body.id,
           body.itemId,
-          body.sentAt,
+          body.emittedAt,
           body.type,
           body.data,
           Date.now(),

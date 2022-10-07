@@ -1,8 +1,7 @@
-import { get, writable } from "svelte/store";
+import { writable } from "svelte/store";
 import {
   applyEvents,
   deleteUnsyncedEvent,
-  deleteUnsyncedPropFromMessage,
   insertUnsyncedEvent,
   openDB,
   selectMessages,
@@ -39,37 +38,24 @@ function createClientDataStore() {
       window.localStorage.setItem("lastSync", Date.now().toString());
     },
     getUnsyncedEvents: async () => selectUnsyncedEvents(await getDB()),
-    syncEventsInClientDb: async (chatEvents, fromServer = false) => {
-      await applyEvents(await getDB(), chatEvents, fromServer);
+    async syncEventsInClientDb(chatEvents) {
+      await applyEvents(await getDB(), chatEvents);
+      window.dispatchEvent(new Event("messages-updated"));
     },
     async sendEvent(event) {
-      await this.syncEventsInClientDb([event]);
-      if (event.type === "postMsg") {
-        store.update((s) => {
-          s.messageCount = s.messageCount + 1;
-          return s;
-        });
-        await this.loadShownMessages(get(store).messageCount);
-      }
       await insertUnsyncedEvent(await getDB(), event);
-      window.dispatchEvent(new Event("send-event"));
+      await this.syncEventsInClientDb([event]);
+      window.dispatchEvent(new Event("unsynced-event-pushed"));
     },
     async finishSendingEvents(events) {
       for (const e of events) {
         await deleteUnsyncedEvent(await getDB(), e.id);
-        if (e.type === "postMsg") {
-          await deleteUnsyncedPropFromMessage(await getDB(), e.itemId);
-          await this.loadShownMessages(get(store).messageCount);
-        }
       }
+      // A "synced" status may be updated, so we need to let the listeners know
+      window.dispatchEvent(new Event("messages-updated"));
     },
-    loadShownMessages: async (count) => {
-      const loadedMessages = await selectMessages(await getDB(), count);
-      store.update((s) => {
-        s.messageCount = count;
-        s.shownMessages = loadedMessages;
-        return s;
-      });
+    getLastMessages: async (count) => {
+      return await selectMessages(await getDB(), count);
     },
   };
 }

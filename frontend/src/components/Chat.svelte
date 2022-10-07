@@ -5,16 +5,22 @@
   import { onMount, tick } from "svelte";
   import { nanoid } from "nanoid";
 
+  const DEFAULT_SHOWN_MESSAGES_COUNT = 50;
+  let shownMessagesCount = DEFAULT_SHOWN_MESSAGES_COUNT;
+  let shownMessages = [];
+
   async function checkMsg(detail) {
     console.log(detail);
   }
 
   async function deleteMsg(message) {
     console.log(message);
+    // Should also work if not synced yet
   }
 
   async function editMsg(message) {
     console.log(message);
+    // Should also work if not synced yet
   }
 
   async function postMsg(message) {
@@ -30,13 +36,19 @@
     document.getElementById("message-container-end").scrollIntoView();
   }
 
+  async function loadMessages() {
+    shownMessages = await store.getLastMessages(shownMessagesCount);
+  }
+
   onMount(() => {
-    store.loadShownMessages(50);
+    loadMessages();
   });
 </script>
 
+<svelte:window on:messages-updated={loadMessages} />
+
 <div class="filler-container">
-  {#each $store.shownMessages as message (message.id)}
+  {#each shownMessages as message (message.id)}
     <MessageRow
       {message}
       on:check-msg={(e) => checkMsg(e.detail)}

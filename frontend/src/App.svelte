@@ -6,9 +6,11 @@
   import { onMount } from "svelte";
 
   let openPage = 0;
+  let unhandledEvent = false;
+  let isUploading = false;
 
   async function sync() {
-    // Get updates from the server
+    // Download updates from the server
     try {
       const response = await fetch(`/api/sync?lastSync=${store.getLastSync()}`);
       if (response.ok) {
@@ -28,49 +30,79 @@
       );
     }
 
-    // Send all unsynced events
-    const unsyncedEvents = await store.getUnsyncedEvents();
-    if (unsyncedEvents.length) {
-      try {
-        const response = await fetch("/api/events", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(unsyncedEvents),
-        });
-        if (response.ok) {
-          await store.finishSendingEvents(unsyncedEvents);
-        } else if (response.status === 401) {
-          openPage = 2;
-        } else {
-          console.error(
-            `Could not push unsynced data. Status Code: ${response.status}`
-          );
-        }
-      } catch (error) {
-        console.error(error);
-        console.error(
-          "Could not push unsynced data. Please check your connection."
-        );
-      }
-    }
+    // Upload unsynced events
+    await uploadEvents();
 
     store.finishSync();
   }
 
-  window.addEventListener("offline", () => {
-    console.log("offline");
-  });
+  async function uploadEvents() {
+    if (isUploading) {
+      unhandledEvent = true;
+      return;
+    }
+    isUploading = true;
 
-  window.addEventListener("online", () => {
+    const upload = async () => {
+      const unsyncedEvents = await store.getUnsyncedEvents();
+      if (unsyncedEvents.length) {
+        try {
+          const response = await fetch("/api/events", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(unsyncedEvents),
+          });
+          if (response.ok) {
+            await store.finishSendingEvents(unsyncedEvents);
+          } else if (response.status === 401) {
+            openPage = 2;
+          } else {
+            console.error(
+              `Could not push unsynced data. Status Code: ${response.status}`
+            );
+          }
+        } catch (error) {
+          console.error(error);
+          console.error(
+            "Could not push unsynced data. Please check your connection."
+          );
+        }
+      }
+      if (unhandledEvent) {
+        // Recursively call the upload method if an event happened during upload
+        unhandledEvent = false;
+        await upload();
+      }
+      console.log("FINISH");
+    };
+
+    await upload();
+    isUploading = false;
+  }
+
+  function goOffline() {
+    console.log("offline");
+    // TODO stop SSE and notify user
+  }
+
+  function goOnline() {
     console.log("online");
-  });
+    // TODO start syncing again and notify user
+  }
 
   onMount(() => {
     if (navigator.onLine) sync();
+    // TODO start listening to updates via SSE
   });
 </script>
+
+<svelte:window
+  on:online={goOnline}
+  on:offline={goOffline}
+  on:unsynced-event-pushed={uploadEvents}
+/>
 
 <main>
   {#if openPage === 0}

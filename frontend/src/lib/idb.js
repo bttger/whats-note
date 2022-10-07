@@ -73,12 +73,18 @@ export async function deleteUnsyncedEvent(db, chatEventId) {
 export async function selectMessages(db, count) {
   const messages = [];
 
+  const unsyncedEvents = await db.getAll("unsyncedEvents");
+
   let cursor = await db
     .transaction("messages", "readonly")
     .store.index("sentAt")
     .openCursor(null, "prev");
 
   while (cursor && count > messages.length) {
+    // TODO check if it is more performant to use an index on "itemId" and making an idb request for each message
+    if (unsyncedEvents.some((e) => e.itemId === cursor.value.id)) {
+      cursor.value.unsynced = true;
+    }
     messages.unshift(cursor.value);
     cursor = await cursor.continue();
   }
@@ -92,13 +98,7 @@ async function updateMessage(db, id, partialMessageDataObj) {
   await db.put("messages", message);
 }
 
-export async function deleteUnsyncedPropFromMessage(db, id) {
-  let message = await db.get("messages", id);
-  delete message.unsynced;
-  await db.put("messages", message);
-}
-
-export async function applyEvents(db, chatEvents, fromServer = false) {
+export async function applyEvents(db, chatEvents) {
   for (const e of chatEvents) {
     const data = e.data ? JSON.parse(e.data) : null;
     switch (e.type) {
@@ -110,28 +110,15 @@ export async function applyEvents(db, chatEvents, fromServer = false) {
         });
         break;
       case "postMsg":
-        if (!fromServer) {
-          await db.put("messages", {
-            id: e.itemId,
-            sentAt: e.emittedAt,
-            unsynced: true,
-            data: {
-              text: data.text,
-              tag: data.tag,
-              checked: false,
-            },
-          });
-        } else {
-          await db.put("messages", {
-            id: e.itemId,
-            sentAt: e.emittedAt,
-            data: {
-              text: data.text,
-              tag: data.tag,
-              checked: false,
-            },
-          });
-        }
+        await db.put("messages", {
+          id: e.itemId,
+          sentAt: e.emittedAt,
+          data: {
+            text: data.text,
+            tag: data.tag,
+            checked: false,
+          },
+        });
         break;
       case "editMsg":
         await updateMessage(db, e.itemId, data);
