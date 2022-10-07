@@ -1,4 +1,3 @@
-import { writable } from "svelte/store";
 import {
   applyEvents,
   deleteUnsyncedEvent,
@@ -8,13 +7,7 @@ import {
   selectUnsyncedEvents,
 } from "./idb.js";
 
-function createClientDataStore() {
-  const store = writable({
-    shownMessages: [],
-    shownNote: null,
-    messageCount: 0,
-  });
-
+function createClientStore() {
   let db;
   async function getDB() {
     if (db) {
@@ -25,7 +18,6 @@ function createClientDataStore() {
   }
 
   return {
-    ...store,
     getLastSync: () => {
       let lastSync = parseInt(window.localStorage.getItem("lastSync"));
       if (!lastSync) {
@@ -60,4 +52,4 @@ function createClientDataStore() {
   };
 }
 
-export const store = createClientDataStore();
+export const store = createClientStore();
