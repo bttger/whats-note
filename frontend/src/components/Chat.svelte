@@ -31,16 +31,21 @@
       type: "postMsg",
       data: JSON.stringify(message),
     });
+    await scrollToLastMessage();
+  }
+
+  async function loadMessages(scrollToBottom = false) {
+    shownMessages = await store.getLastMessages(shownMessagesCount);
+    if (scrollToBottom) await scrollToLastMessage();
+  }
+
+  async function scrollToLastMessage() {
     await tick();
     document.getElementById("message-container-end").scrollIntoView();
   }
 
-  async function loadMessages() {
-    shownMessages = await store.getLastMessages(shownMessagesCount);
-  }
-
   onMount(() => {
-    loadMessages();
+    loadMessages(true);
   });
 </script>
 

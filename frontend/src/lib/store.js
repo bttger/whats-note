@@ -31,6 +31,9 @@ function createClientStore() {
     },
     getUnsyncedEvents: async () => selectUnsyncedEvents(await getDB()),
     async syncEventsInClientDb(chatEvents) {
+      if (!chatEvents.length) {
+        return;
+      }
       await applyEvents(await getDB(), chatEvents);
       window.dispatchEvent(new Event("messages-updated"));
     },
