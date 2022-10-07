@@ -24,7 +24,6 @@
   }
 
   async function postMsg(message) {
-    console.log(message);
     await store.sendEvent({
       id: nanoid(12),
       itemId: nanoid(10),

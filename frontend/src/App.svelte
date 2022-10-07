@@ -75,7 +75,6 @@
         unhandledEvent = false;
         await upload();
       }
-      console.log("FINISH");
     };
 
     await upload();
