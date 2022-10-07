@@ -10,7 +10,12 @@
   let shownMessages = [];
 
   async function checkMsg(detail) {
-    console.log(detail);
+    await store.sendEvent({
+      id: nanoid(12),
+      itemId: detail.message.id,
+      emittedAt: Date.now(),
+      type: detail.checked ? "checkMsg" : "uncheckMsg",
+    });
   }
 
   async function deleteMsg(message) {
@@ -23,13 +28,13 @@
     // Should also work if not synced yet
   }
 
-  async function postMsg(message) {
+  async function postMsg(msgData) {
     await store.sendEvent({
       id: nanoid(12),
       itemId: nanoid(10),
       emittedAt: Date.now(),
       type: "postMsg",
-      data: JSON.stringify(message),
+      data: JSON.stringify(msgData),
     });
     await scrollToLastMessage();
   }
