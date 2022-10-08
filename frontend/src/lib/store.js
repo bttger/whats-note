@@ -27,8 +27,11 @@ function createClientStore() {
       }
       return lastSync;
     },
-    finishSync: () => {
-      window.localStorage.setItem("lastSync", Date.now().toString());
+    finishSync: (timestamp) => {
+      window.localStorage.setItem(
+        "lastSync",
+        timestamp ? timestamp : Date.now().toString()
+      );
     },
     getUnsyncedEvents: async () => selectUnsyncedEvents(await getDB()),
     async syncEventsInClientDb(chatEvents) {
@@ -37,6 +40,7 @@ function createClientStore() {
       }
       await applyEvents(await getDB(), chatEvents);
       window.dispatchEvent(new Event("messages-updated"));
+      window.dispatchEvent(new Event("note-updated"));
     },
     async sendEvent(event) {
       await insertUnsyncedEvent(await getDB(), event);

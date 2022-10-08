@@ -22,13 +22,18 @@
     }, 600);
   }
 
+  async function getNote() {
+    const note = await store.getNote(openTab);
+    inputEl.innerHTML = note.data.text;
+    lastEdit = note.lastEdit;
+  }
+
   $: {
-    store.getNote(openTab).then((n) => {
-      inputEl.innerHTML = n.data.text;
-      lastEdit = n.lastEdit;
-    });
+    getNote();
   }
 </script>
+
+<svelte:window on:note-updated={getNote} />
 
 <div class="filler-container">
   <div

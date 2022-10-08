@@ -156,7 +156,7 @@ async function authenticatedEndpoints(fastify, options) {
 
     // Send keep-alive event every 30 seconds
     const intervalHandler = setInterval(
-      () => reply.raw.write(`: ${Date.now()}\n\n`),
+      () => reply.raw.write(`event: ping\ndata: ${Date.now()}\n\n`),
       30000
     );
 
@@ -181,7 +181,7 @@ async function authenticatedEndpoints(fastify, options) {
       if (data === "close") {
         reply.raw.end();
       } else {
-        reply.raw.write(`data: ${JSON.stringify(data)}\n\n`);
+        reply.raw.write(`event: sync\ndata: ${JSON.stringify(data)}\n\n`);
       }
     };
     sseEvents.on(clientId, listener);

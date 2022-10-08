@@ -8,6 +8,7 @@
   let openPage = 0;
   let unhandledEvent = false;
   let isUploading = false;
+  let eventSource;
 
   async function sync() {
     // Download updates from the server
@@ -16,6 +17,9 @@
       if (response.ok) {
         const json = await response.json();
         await store.syncEventsInClientDb(json, true);
+        // Upload unsynced events
+        await uploadEvents();
+        store.finishSync();
       } else if (response.status === 401) {
         openPage = 2;
       } else {
@@ -29,11 +33,6 @@
         "Could not pull new updates. Please check your connection."
       );
     }
-
-    // Upload unsynced events
-    await uploadEvents();
-
-    store.finishSync();
   }
 
   async function uploadEvents() {
@@ -82,18 +81,26 @@
   }
 
   function goOffline() {
-    console.log("offline");
-    // TODO stop SSE and notify user
+    console.log("OFFLINE");
+    // TODO stop SSE/remove listeners and notify user
   }
 
   function goOnline() {
-    console.log("online");
-    // TODO start syncing again and notify user
+    console.log("ONLINE");
+    sync();
+    eventSource = new EventSource("/api/listen");
+    eventSource.addEventListener("sync", (event) => {
+      store.syncEventsInClientDb([JSON.parse(event.data)]);
+    });
+    eventSource.addEventListener("ping", (event) => {
+      store.finishSync(event.data);
+    });
   }
 
   onMount(() => {
-    if (navigator.onLine) sync();
-    // TODO start listening to updates via SSE
+    if (navigator.onLine) {
+      goOnline();
+    }
   });
 </script>
 
@@ -113,7 +120,7 @@
       on:open-page={(e) => (openPage = e.detail)}
       on:refresh={() => {
         openPage = 0;
-        sync();
+        goOnline();
       }}
     />
   {/if}
