@@ -21,6 +21,7 @@ server.register(fastifySession, {
     maxAge: COOKIE_MAX_AGE,
     httpOnly: true,
     secure: process.env.COOKIE_SECURE === "true",
+    sameSite: "Lax",
   },
 });
 server.register(staticController);
