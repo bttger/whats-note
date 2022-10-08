@@ -19,8 +19,12 @@
   }
 
   async function deleteMsg(message) {
-    console.log(message);
-    // Should also work if not synced yet
+    await store.sendEvent({
+      id: nanoid(12),
+      itemId: message.id,
+      emittedAt: Date.now(),
+      type: "deleteMsg",
+    });
   }
 
   async function editMsg(message) {
