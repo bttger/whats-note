@@ -1,16 +1,38 @@
 <script>
   import { pasteAsPlainText, insertLineBreak } from "../lib/utils.js";
+  import { store } from "../lib/store.js";
+  import { nanoid } from "nanoid";
 
   export let openTab;
-  let note = {};
+  let lastEdit;
+  let debounceTimer;
+  let inputEl;
 
   function editNote(text) {
-    console.log(text);
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(async () => {
+      lastEdit = Date.now();
+      await store.sendEvent({
+        id: nanoid(12),
+        itemId: openTab,
+        emittedAt: lastEdit,
+        type: "editNote",
+        data: JSON.stringify({ text }),
+      });
+    }, 600);
+  }
+
+  $: {
+    store.getNote(openTab).then((n) => {
+      inputEl.innerHTML = n.data.text;
+      lastEdit = n.lastEdit;
+    });
   }
 </script>
 
 <div class="filler-container">
   <div
+    bind:this={inputEl}
     class="note"
     contenteditable="true"
     on:input={(e) => {
@@ -39,7 +61,7 @@
     </div>
   </div>
   <div class="note-info">
-    <div>Last edit: {new Date(note.lastEdit).toLocaleString()}</div>
+    <div>Last edit: {new Date(lastEdit).toLocaleString()}</div>
   </div>
 </div>
 

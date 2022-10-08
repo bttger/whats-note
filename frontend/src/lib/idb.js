@@ -106,7 +106,7 @@ export async function applyEvents(db, chatEvents) {
         db.put("notes", {
           id: parseInt(e.itemId),
           lastEdit: e.emittedAt,
-          data: { text: data.text },
+          data,
         });
         break;
       case "postMsg":
@@ -144,27 +144,4 @@ export async function selectNote(db, id) {
       lastEdit: Date.now(),
     }
   );
-}
-
-export async function selectNotes(db) {
-  return await db.getAll("notes");
-}
-
-export async function startUpdateNote(db, id, text) {
-  const note = await selectNote(db, id);
-  note.text = text;
-  note.lastEdit = Date.now();
-  note.isSyncing = 1;
-  note.unsynced = 1;
-  await db.put("notes", note);
-  return note;
-}
-
-export async function finishUpdateNote(db, id, error = false) {
-  const note = await selectNote(db, id);
-  note.isSyncing = 0;
-  note.unsynced = error ? 1 : 0;
-  note.lastSync = error ? note.lastSync : Date.now();
-  await db.put("notes", note);
-  return note;
 }

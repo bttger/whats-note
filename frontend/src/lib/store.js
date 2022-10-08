@@ -4,6 +4,7 @@ import {
   insertUnsyncedEvent,
   openDB,
   selectMessages,
+  selectNote,
   selectUnsyncedEvents,
 } from "./idb.js";
 
@@ -51,6 +52,9 @@ function createClientStore() {
     },
     getLastMessages: async (count) => {
       return await selectMessages(await getDB(), count);
+    },
+    getNote: async (id) => {
+      return await selectNote(await getDB(), id);
     },
   };
 }
