@@ -65,7 +65,8 @@
 
   async function scrollToLastMessage() {
     await tick();
-    document.getElementById("message-container-end").scrollIntoView();
+    const el = document.getElementById("message-container-end");
+    if (el) el.scrollIntoView();
   }
 
   onMount(() => {
