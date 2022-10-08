@@ -45,6 +45,11 @@
     }
   }
 
+  function focusInputField() {
+    inputEl.focus();
+    focusedTag = 0;
+  }
+
   function moveSendButtonFocus(event) {
     // Move through the tags with arrow keys
     if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
@@ -82,30 +87,26 @@
     }
   }
 
-  function focusInputField() {
-    inputEl.focus();
-    focusedTag = 0;
-  }
-
-  function registerPostMessageEvent(event) {
-    if (event.target.attributes["data-tag-index"]) {
-      postMsg(parseInt(event.target.attributes["data-tag-index"].value));
-    } else {
-      postMsg();
-    }
-    focusInputField();
-  }
-
-  function postMsg(tagIndex) {
+  function postMessage(event) {
     if (!inputEl.innerHTML) {
       return;
     }
-    dispatch("post-msg", {
-      text: inputEl.innerHTML,
-      tag: tags[tagIndex],
-      checked: false,
-    });
+
+    const emitEvent = (tagIndex) => {
+      dispatch("post-msg", {
+        text: inputEl.innerHTML,
+        tag: tags[tagIndex],
+        checked: false,
+      });
+    };
+
+    if (event.target.attributes["data-tag-index"]) {
+      emitEvent(parseInt(event.target.attributes["data-tag-index"].value));
+    } else {
+      emitEvent();
+    }
     inputEl.innerHTML = "";
+    focusInputField();
   }
 </script>
 
@@ -134,11 +135,11 @@
     class="button show-tag-buttons"
     tabindex="0"
     on:click={(e) => {
-      registerPostMessageEvent(e);
+      postMessage(e);
     }}
     on:keyup={(e) => {
       if (e.key === "Enter") {
-        registerPostMessageEvent(e);
+        postMessage(e);
       }
     }}
     on:keydown={moveSendButtonFocus}
