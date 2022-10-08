@@ -9,6 +9,9 @@
   let shownMessagesCount = DEFAULT_SHOWN_MESSAGES_COUNT;
   let shownMessages = [];
 
+  let messageBeingEdited = null;
+  let editMessageChild;
+
   async function checkMsg(detail) {
     await store.sendEvent({
       id: nanoid(12),
@@ -28,18 +31,30 @@
   }
 
   async function editMsg(message) {
-    console.log(message);
-    // Should also work if not synced yet
+    messageBeingEdited = message;
+    editMessageChild(message.data.text);
   }
 
   async function postMsg(msgData) {
-    await store.sendEvent({
-      id: nanoid(12),
-      itemId: nanoid(10),
-      emittedAt: Date.now(),
-      type: "postMsg",
-      data: JSON.stringify(msgData),
-    });
+    if (messageBeingEdited) {
+      await store.sendEvent({
+        id: nanoid(12),
+        itemId: messageBeingEdited.id,
+        emittedAt: Date.now(),
+        type: "editMsg",
+        data: JSON.stringify(msgData),
+      });
+      messageBeingEdited = null;
+    } else {
+      await store.sendEvent({
+        id: nanoid(12),
+        itemId: nanoid(10),
+        emittedAt: Date.now(),
+        type: "postMsg",
+        data: JSON.stringify(msgData),
+      });
+    }
+
     await scrollToLastMessage();
   }
 
@@ -72,4 +87,8 @@
   <div id="message-container-end" style="height: 1px; margin-top: -1px" />
 </div>
 
-<MessageInput on:post-msg={(e) => postMsg(e.detail)} />
+<MessageInput
+  {messageBeingEdited}
+  bind:editMessage={editMessageChild}
+  on:post-msg={(e) => postMsg(e.detail)}
+/>

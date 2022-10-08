@@ -108,6 +108,14 @@
     inputEl.innerHTML = "";
     focusInputField();
   }
+
+  // MESSAGE EDITING
+  export let messageBeingEdited;
+
+  export const editMessage = (text) => {
+    inputEl.innerHTML = text;
+    focusInputField();
+  };
 </script>
 
 <svelte:window
@@ -144,7 +152,13 @@
     }}
     on:keydown={moveSendButtonFocus}
   >
-    <span>&gt;</span>
+    <span>
+      {#if messageBeingEdited}
+        ed.
+      {:else}
+        &gt;
+      {/if}
+    </span>
 
     <div bind:this={tagSelectionEl} class="tag-selection">
       {#each tags as tag, index (tag.id)}
