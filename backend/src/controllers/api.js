@@ -66,7 +66,7 @@ export default async function apiController(fastify, options) {
  */
 async function authenticatedEndpoints(fastify, options) {
   const sseEvents = new EventEmitter();
-  // Account IDs mapped to IDs of connected clients
+  // Account IDs mapped to session IDs
   const clients = new Map();
 
   // Ensure streams get closed gracefully
@@ -80,8 +80,8 @@ async function authenticatedEndpoints(fastify, options) {
       );
 
       clients.forEach((v) => {
-        v.forEach((clientId) => {
-          sseEvents.emit(clientId, "close");
+        v.forEach((sessionId) => {
+          sseEvents.emit(sessionId, "close");
         });
       });
     });
@@ -123,8 +123,12 @@ async function authenticatedEndpoints(fastify, options) {
       // Emit SSE event
       const connectedClients = clients.get(request.session.accountId);
       if (Array.isArray(connectedClients) && connectedClients.length) {
-        connectedClients.forEach((clientId) => {
-          sseEvents.emit(clientId, body);
+        connectedClients.forEach((sessionId) => {
+          // Emit a new event for all connected clients of the same account but
+          // not the client that has sent the event
+          if (request.cookies.sessionId !== sessionId) {
+            sseEvents.emit(sessionId, body);
+          }
         });
       }
     };
@@ -161,18 +165,18 @@ async function authenticatedEndpoints(fastify, options) {
     );
 
     // Add the client to the connected clients list
-    const clientId = request.id;
+    const sessionId = request.cookies.sessionId;
     const accountId = request.session.accountId;
     let connectedClients = clients.get(accountId);
     if (Array.isArray(connectedClients) && connectedClients.length) {
-      connectedClients.push(clientId);
+      connectedClients.push(sessionId);
     } else {
-      clients.set(accountId, [clientId]);
+      clients.set(accountId, [sessionId]);
     }
     const removeClient = () => {
       clients.set(
         accountId,
-        clients.get(accountId).filter((presentId) => presentId !== clientId)
+        clients.get(accountId).filter((presentId) => presentId !== sessionId)
       );
     };
 
@@ -184,14 +188,14 @@ async function authenticatedEndpoints(fastify, options) {
         reply.raw.write(`event: sync\ndata: ${JSON.stringify(data)}\n\n`);
       }
     };
-    sseEvents.on(clientId, listener);
+    sseEvents.on(sessionId, listener);
 
     // Clean up the connection
     reply.raw.on("close", () => {
-      sseEvents.removeListener(clientId, listener);
+      sseEvents.removeListener(sessionId, listener);
       clearInterval(intervalHandler);
       removeClient();
-      fastify.log.info({ clientId }, "cleaned up SSE connection");
+      fastify.log.info({ sessionId }, "cleaned up SSE connection");
     });
   });
 }
