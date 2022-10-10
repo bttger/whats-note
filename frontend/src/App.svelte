@@ -16,7 +16,7 @@
       const response = await fetch(`/api/sync?lastSync=${store.getLastSync()}`);
       if (response.ok) {
         const json = await response.json();
-        await store.syncEventsInClientDb(json, true);
+        await store.syncEventsInClientDb(json);
         // Upload unsynced events
         await uploadEvents();
         store.finishSync();

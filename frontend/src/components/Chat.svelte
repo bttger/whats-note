@@ -57,13 +57,13 @@
         data: JSON.stringify(msgData),
       });
     }
-
-    await scrollToLastMessage();
   }
 
   async function loadMessages(scrollToBottom = false) {
     shownMessages = await store.getLastMessages(shownMessagesCount, filter);
-    if (scrollToBottom) await scrollToLastMessage();
+    if (scrollToBottom) {
+      await scrollToLastMessage();
+    }
   }
 
   async function scrollToLastMessage() {
@@ -77,9 +77,11 @@
   });
 </script>
 
-<svelte:window on:messages-updated={loadMessages} />
+<svelte:window
+  on:messages-updated={(e) => loadMessages(e.detail.containsNewMsg)}
+/>
 
-<ChatFilter bind:filter on:update={loadMessages} />
+<ChatFilter bind:filter on:update={() => loadMessages()} />
 
 <div class="filler-container">
   {#each shownMessages as message (message.id)}

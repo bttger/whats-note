@@ -77,17 +77,28 @@ function createClientStore() {
       );
     },
     getUnsyncedEvents: async () => selectUnsyncedEvents(await getDB()),
-    async syncEventsInClientDb(chatEvents) {
+    async syncEventsInClientDb(chatEvents, skipNoteUpdatedEvent = false) {
       if (!chatEvents.length) {
         return;
       }
       await applyEvents(await getDB(), chatEvents);
-      window.dispatchEvent(new Event("messages-updated"));
-      window.dispatchEvent(new Event("note-updated"));
+
+      // Emit messages-updated event to trigger reload of chat messages
+      window.dispatchEvent(
+        new CustomEvent("messages-updated", {
+          detail: {
+            containsNewMsg: chatEvents.some((e) => e.type === "postMsg"),
+          },
+        })
+      );
+
+      if (!skipNoteUpdatedEvent) {
+        window.dispatchEvent(new Event("note-updated"));
+      }
     },
     async sendEvent(event) {
       await insertUnsyncedEvent(await getDB(), event);
-      await this.syncEventsInClientDb([event]);
+      await this.syncEventsInClientDb([event], true);
       window.dispatchEvent(new Event("unsynced-event-pushed"));
     },
     async finishSendingEvents(events) {
@@ -95,7 +106,13 @@ function createClientStore() {
         await deleteUnsyncedEvent(await getDB(), e.id);
       }
       // A "synced" status may be updated, so we need to let the listeners know
-      window.dispatchEvent(new Event("messages-updated"));
+      window.dispatchEvent(
+        new CustomEvent("messages-updated", {
+          detail: {
+            containsNewMsg: false,
+          },
+        })
+      );
     },
     getLastMessages: async (count, filter) => {
       return await selectMessages(await getDB(), count, filter);
