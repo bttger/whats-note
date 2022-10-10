@@ -12,8 +12,8 @@
     "prettier": "2.7.1"
   },
   "dependencies": {
-    "@fastify/cookie": "^7.3.1",
-    "@fastify/session": "^9.0.0",
+    "@fastify/cookie": "^8.3.0",
+    "@fastify/session": "^10.0.0",
     "@fastify/static": "^6.5.0",
     "argon2": "^0.29.1",
     "better-sqlite3": "^7.6.2",
