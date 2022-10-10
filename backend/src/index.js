@@ -9,10 +9,10 @@ import sqliteDB from "./sqlite-db.js";
 const COOKIE_MAX_AGE =
   parseInt(process.env.COOKIE_MAX_AGE) || 60 * 60 * 24 * 30 * 1000; // default 30 days
 const SHUTDOWN_TIMEOUT = 10 * 1000; // default 10 secs
-const LOGGING = process.env.LOGGING === "true";
+const LOG_LEVEL = process.env.LOG_LEVEL || "warn";
 
 // Initialize Fastify server
-const server = Fastify({ logger: LOGGING });
+const server = Fastify({ logger: { level: LOG_LEVEL } });
 
 // Register all plugins
 server.register(fastifyCookie);
