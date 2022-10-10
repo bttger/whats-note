@@ -4,13 +4,16 @@
   import { store } from "../lib/store.js";
   import { onMount, tick } from "svelte";
   import { nanoid } from "nanoid";
+  import ChatFilter from "./ChatFilter.svelte";
 
-  const DEFAULT_SHOWN_MESSAGES_COUNT = 50;
+  const DEFAULT_SHOWN_MESSAGES_COUNT = 100;
   let shownMessagesCount = DEFAULT_SHOWN_MESSAGES_COUNT;
   let shownMessages = [];
 
   let messageBeingEdited = null;
   let editMessageChild;
+
+  let filter = { hideChecked: true, search: "", tagId: undefined };
 
   async function checkMsg(detail) {
     await store.sendEvent({
@@ -59,7 +62,7 @@
   }
 
   async function loadMessages(scrollToBottom = false) {
-    shownMessages = await store.getLastMessages(shownMessagesCount);
+    shownMessages = await store.getLastMessages(shownMessagesCount, filter);
     if (scrollToBottom) await scrollToLastMessage();
   }
 
@@ -75,6 +78,8 @@
 </script>
 
 <svelte:window on:messages-updated={loadMessages} />
+
+<ChatFilter bind:filter on:update={loadMessages} />
 
 <div class="filler-container">
   {#each shownMessages as message (message.id)}

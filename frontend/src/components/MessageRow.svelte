@@ -115,12 +115,6 @@
     align-self: end;
   }
 
-  input[type="checkbox"] {
-    padding: 0;
-    margin: 0;
-    cursor: pointer;
-  }
-
   .message-actions {
     position: absolute;
     display: none;

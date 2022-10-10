@@ -1,7 +1,8 @@
 <script>
-  import { createEventDispatcher } from "svelte";
+  import { createEventDispatcher, onMount } from "svelte";
   import { pasteAsPlainText, insertLineBreak } from "../lib/utils.js";
   import { computePosition } from "@floating-ui/dom";
+  import { store } from "../lib/store.js";
 
   const dispatch = createEventDispatcher();
 
@@ -9,13 +10,7 @@
   let sendButtonEl;
   let tagSelectionEl;
 
-  const tags = [
-    { id: 1, name: "To do", color: "#881337" },
-    { id: 2, name: "Read", color: "#713f12" },
-    { id: 3, name: "Work", color: "#4c1d95" },
-    { id: 4, name: "Remember", color: "#1e3a8a" },
-    { id: 5, name: "Buy", color: "#14532d" },
-  ];
+  let tags = [];
   // Keeps track of the focused tag (or no tag if focusedTag == 0)
   let focusedTag = 0;
 
@@ -116,6 +111,10 @@
     inputEl.innerHTML = text;
     focusInputField();
   };
+
+  onMount(() => {
+    tags = store.getTags();
+  });
 </script>
 
 <svelte:window
@@ -207,10 +206,5 @@
     left: 0;
     display: none;
     gap: 0.5rem;
-  }
-
-  .tag-button {
-    padding: 0 0.2rem 0 0.2rem;
-    color: #e3e3e3;
   }
 </style>

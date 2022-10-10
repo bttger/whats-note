@@ -1,10 +1,15 @@
 <script>
-  import { createEventDispatcher } from "svelte";
+  import { createEventDispatcher, onMount } from "svelte";
+  import { store } from "../lib/store.js";
 
   const dispatch = createEventDispatcher();
 
-  export let tabs = [0, 1, 2, 3, 4]; // TODO outsource to custom store derived from LS for settings change
   export let openTab;
+  let tabs = [];
+
+  onMount(() => {
+    tabs = store.getTabs();
+  });
 </script>
 
 <div class="tabs">

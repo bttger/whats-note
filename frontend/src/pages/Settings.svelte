@@ -19,6 +19,9 @@
   </div>
   <h1>Settings</h1>
   <p>Message Tags</p>
+  <!-- Keep in mind that filtering works by the tag ID. If you change the title
+  of a tag, the chat window will still show you older messages with the old tag
+  name when you filter for the new tag name. -->
   <p>Number of Scratchpads</p>
   <hr />
   <!-- TODO insert links to github repo and how to involve in the project or suggest improvements -->
