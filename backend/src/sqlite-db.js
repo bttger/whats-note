@@ -1,5 +1,4 @@
 import fp from "fastify-plugin";
-import SQLite from "better-sqlite3";
 
 // Get the current directory path in ESM scope
 import { fileURLToPath } from "url";
@@ -8,12 +7,8 @@ import { readFileSync } from "fs";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export const sqliteDB = fp(async function (fastify) {
-  const db = new SQLite("whatsnote.db", {
-    verbose: (msg) => {
-      fastify.log.info(`SQLite: ${msg}`);
-    },
-  });
+export const sqliteDB = fp(async function (fastify, options) {
+  const db = options.db;
 
   // Enable write-ahead-logging and foreign key constraints
   db.pragma("journal_mode = wal");

@@ -17,6 +17,7 @@
     "@fastify/static": "^6.5.0",
     "argon2": "^0.29.1",
     "better-sqlite3": "^7.6.2",
+    "better-sqlite3-session-store": "^0.1.0",
     "fastify": "^4.3.0",
     "fastify-plugin": "^4.2.0"
   }
