@@ -207,4 +207,11 @@ async function authenticatedEndpoints(fastify, options) {
       fastify.log.info({ sessionId }, "cleaned up SSE connection");
     });
   });
+
+  fastify.get("/delete-account", async (request) => {
+    fastify.db
+      .prepare(`DELETE FROM accounts WHERE id = ?`)
+      .run(request.session.accountId);
+    request.session.destroy();
+  });
 }

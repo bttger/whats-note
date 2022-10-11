@@ -21,8 +21,8 @@ const DEFAULT_TABS = [0, 1, 2, 3, 4];
 function createClientStore() {
   let tags;
   let tabs;
-
   let db;
+
   async function getDB() {
     if (db) {
       return db;
@@ -119,6 +119,14 @@ function createClientStore() {
     },
     getNote: async (id) => {
       return await selectNote(await getDB(), id);
+    },
+    deleteClientData: async () => {
+      window.localStorage.clear();
+      (await getDB()).close();
+      db = null;
+      tags = null;
+      tabs = null;
+      window.indexedDB.deleteDatabase("whats-note");
     },
   };
 }
