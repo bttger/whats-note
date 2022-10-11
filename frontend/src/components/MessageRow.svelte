@@ -59,8 +59,7 @@
     <div>
       {#each links as link}
         <a href={link} target="_blank" class="block">{link}</a>
-      {/each}
-      {message.data.text}
+      {/each}{message.data.text}
     </div>
     <span class="message-info">
       {new Date(message.sentAt).toLocaleString() +
