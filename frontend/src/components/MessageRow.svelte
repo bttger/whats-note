@@ -70,7 +70,7 @@
       ? "background-color: " + message.data.tag.color
       : "background-color: #2c2c2c"}
   >
-    <div
+    <button
       class="button"
       on:click={() => {
         hideMessageActions();
@@ -78,8 +78,8 @@
       }}
     >
       Edit
-    </div>
-    <div
+    </button>
+    <button
       class="button"
       on:click={() => {
         hideMessageActions();
@@ -87,7 +87,7 @@
       }}
     >
       Delete
-    </div>
+    </button>
   </div>
 </div>
 

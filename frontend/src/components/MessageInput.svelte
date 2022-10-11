@@ -137,10 +137,9 @@
     on:focus={showTagSelection}
   />
 
-  <div
+  <button
     bind:this={sendButtonEl}
     class="button show-tag-buttons"
-    tabindex="0"
     on:click={(e) => {
       postMessage(e);
     }}
@@ -161,18 +160,17 @@
 
     <div bind:this={tagSelectionEl} class="tag-selection">
       {#each tags as tag, index (tag.id)}
-        <div
+        <button
           id="msg-tag-{tag.id}"
           data-tag-index={index}
           class="button tag-button show-tag-buttons"
-          tabindex="0"
           style="background-color: {tag.color}"
         >
           {tag.name}
-        </div>
+        </button>
       {/each}
     </div>
-  </div>
+  </button>
 </div>
 
 <style>

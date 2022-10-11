@@ -49,9 +49,8 @@
 
 <div class="container" style="justify-content: flex-end;">
   {#each tags as tag, index (tag.id)}
-    <div
+    <button
       class="button tag-button"
-      tabindex="0"
       style="background-color: {tag.color}; filter: brightness({filter.tagId
         ? filter.tagId === tag.id
           ? 1
@@ -63,7 +62,7 @@
       }}
     >
       {tag.name}
-    </div>
+    </button>
   {/each}
 </div>
 

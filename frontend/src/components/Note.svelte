@@ -51,19 +51,19 @@
 </div>
 <div class="note-info-container">
   <div>
-    <div
+    <button
       class="button inline-block"
       style="margin-right: 0.3rem"
       on:click={() => document.execCommand("undo")}
     >
       ↶
-    </div>
-    <div
+    </button>
+    <button
       class="button inline-block"
       on:click={() => document.execCommand("redo")}
     >
       ↷
-    </div>
+    </button>
   </div>
   <div class="note-info">
     <div>Last edit: {new Date(lastEdit).toLocaleString()}</div>

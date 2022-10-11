@@ -12,7 +12,11 @@
 <div class="full-height-container">
   <Tabs bind:openTab on:change-tab={(e) => (openTab = e.detail)}>
     <!-- Settings tab -->
-    <div class="button block" on:click={() => dispatch("open-page", 1)}>⚙</div>
+    <button
+      class="button"
+      style="flex: 1 1 0"
+      on:click={() => dispatch("open-page", 1)}>⚙</button
+    >
   </Tabs>
 
   {#if openTab === 0}

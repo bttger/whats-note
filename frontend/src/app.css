@@ -23,9 +23,8 @@ body {
 }
 
 .button {
+  font-size: 1rem;
   color: #1a1a1a;
-  cursor: pointer;
-  text-align: center;
   background: silver;
   box-shadow: inset -1px -1px #434343, inset 1px 1px #fff, inset -2px -2px grey,
     inset 2px 2px #dfdfdf;

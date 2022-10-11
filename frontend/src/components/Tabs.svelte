@@ -14,17 +14,15 @@
 
 <div class="tabs">
   {#each tabs as tab}
-    <div
+    <button
       class="button tab"
       class:focused={openTab === tab}
       on:click={() => dispatch("change-tab", tab)}
     >
       {tab}
-    </div>
+    </button>
   {/each}
-  <div class="tab">
-    <slot />
-  </div>
+  <slot />
 </div>
 
 <style>
