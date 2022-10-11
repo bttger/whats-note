@@ -39,6 +39,7 @@
   </label>
 
   <input
+    class="do-not-change-focus"
     aria-label="filter for messages with the search input"
     type="search"
     placeholder="Search..."

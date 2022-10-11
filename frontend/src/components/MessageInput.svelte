@@ -121,12 +121,22 @@
   on:resize={() => {
     if (tagSelectionEl.style.display === "flex") showTagSelection();
   }}
+  on:keydown={(e) => {
+    if (!document.activeElement.classList.contains("do-not-change-focus")) {
+      if (e.key.length === 1 && e.key.match(/[a-z0-9öäü]/i)) {
+        focusInputField();
+      }
+      if (e.code === "Space" && e.ctrlKey) {
+        focusInputField();
+      }
+    }
+  }}
 />
 
 <div class="message-input" on:focusout={checkHidingTagButtons}>
   <div
     bind:this={inputEl}
-    class="input-div show-tag-buttons"
+    class="do-not-change-focus input-div show-tag-buttons"
     contenteditable="true"
     on:paste={(e) => pasteAsPlainText(e)}
     on:keydown={(e) => {
