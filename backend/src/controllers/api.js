@@ -104,21 +104,30 @@ async function authenticatedEndpoints(fastify, options) {
 
   fastify.post("/events", async (request) => {
     const insertNewEvent = (body) => {
-      // TODO if editNote event, delete the previous related event first in a tx
-      fastify.db
-        .prepare(
-          `INSERT INTO events (id, item_id, emitted_at, type, data, received_at, from_account)
+      fastify.db.transaction(() => {
+        if (body.type === "editNote") {
+          fastify.db
+            .prepare(
+              `DELETE FROM events
+               WHERE from_account = ? AND item_id = ?`
+            )
+            .run(body.itemId, request.session.accountId);
+        }
+        fastify.db
+          .prepare(
+            `INSERT INTO events (id, item_id, emitted_at, type, data, received_at, from_account)
             VALUES (?, ?, ?, ?, ?, ?, ?)`
-        )
-        .run(
-          body.id,
-          body.itemId,
-          body.emittedAt,
-          body.type,
-          body.data,
-          Date.now(),
-          request.session.accountId
-        );
+          )
+          .run(
+            body.id,
+            body.itemId,
+            body.emittedAt,
+            body.type,
+            body.data,
+            Date.now(),
+            request.session.accountId
+          );
+      })();
 
       // Emit SSE event
       const connectedClients = clients.get(request.session.accountId);
