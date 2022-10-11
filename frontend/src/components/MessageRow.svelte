@@ -5,6 +5,7 @@
   const dispatch = createEventDispatcher();
 
   export let message;
+  let links = message.data.text.match(/https?:\/\/\S+/g) || [];
   let messageEl;
   let actionsEl;
 
@@ -56,6 +57,9 @@
         : showMessageActions()}
   >
     <div>
+      {#each links as link}
+        <a href={link} target="_blank" class="block">{link}</a>
+      {/each}
       {message.data.text}
     </div>
     <span class="message-info">
