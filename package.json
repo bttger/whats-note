@@ -1,7 +1,7 @@
 {
   "name": "whats-note",
   "version": "0.1.0",
-  "description": "Send yourself messages, organize your notes, and sync them with all your devices in a freaking simple PWA",
+  "description": "Send yourself messages, cache your notes, and sync them with all your devices",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/bttger/whats-note.git"
