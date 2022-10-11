@@ -1,16 +1,10 @@
 {
-  "name": "note-messenger",
+  "name": "whats-note",
   "version": "0.1.0",
-  "description": "Send yourself messages, organize your notes, and sync them with all your devices in a freaking simple PWA",
-  "main": "src/index.js",
-  "type": "module",
-  "scripts": {
-    "start": "node src/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "description": "Send yourself messages, cache your notes, and sync them with all your devices",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bttger/note-messenger.git"
+    "url": "git+https://github.com/bttger/whats-note.git"
   },
   "keywords": [
     "productivity",
@@ -24,18 +18,11 @@
   "author": "Tom Böttger",
   "license": "GPL-3.0-or-later",
   "bugs": {
-    "url": "https://github.com/bttger/note-messenger/issues"
+    "url": "https://github.com/bttger/whats-note/issues"
   },
-  "homepage": "https://github.com/bttger/note-messenger",
-  "devDependencies": {
-    "eslint": "^8.20.0",
-    "eslint-config-prettier": "^8.5.0",
-    "prettier": "2.7.1"
-  },
-  "dependencies": {
-    "@fastify/cookie": "^7.3.1",
-    "@fastify/session": "^9.0.0",
-    "@fastify/static": "^6.5.0",
-    "fastify": "^4.3.0"
-  }
+  "homepage": "https://github.com/bttger/whats-note",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ]
 }

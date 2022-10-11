@@ -1,0 +1,24 @@
+{
+  "name": "backend",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "eslint": "^8.20.0",
+    "eslint-config-prettier": "^8.5.0",
+    "prettier": "2.7.1"
+  },
+  "dependencies": {
+    "@fastify/cookie": "^8.3.0",
+    "@fastify/session": "^10.0.0",
+    "@fastify/static": "^6.5.0",
+    "argon2": "^0.29.1",
+    "better-sqlite3": "^7.6.2",
+    "better-sqlite3-session-store": "^0.1.0",
+    "fastify": "^4.3.0",
+    "fastify-plugin": "^4.2.0"
+  }
+}

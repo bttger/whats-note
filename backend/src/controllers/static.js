@@ -10,16 +10,5 @@ const __dirname = path.resolve(path.dirname(__filename), "../");
  * @param {FastifyInstance} fastify  Encapsulated Fastify Instance
  */
 export default async function staticController(fastify) {
-  fastify.addHook("preHandler", async (request, reply) => {
-    if (
-      !request.session.authenticated &&
-      request.url !== "/login" &&
-      !request.url.startsWith("/images") &&
-      !request.url.startsWith("/manifest.json")
-    ) {
-      reply.redirect("/login");
-    }
-  });
-
   fastify.register(fastifyStatic, { root: path.join(__dirname, "www") });
 }
