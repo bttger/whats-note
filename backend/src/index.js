@@ -6,7 +6,7 @@ import staticController from "./controllers/static.js";
 import apiController from "./controllers/api.js";
 import sqliteDB from "./sqlite-db.js";
 import SQLite from "better-sqlite3";
-import SqliteStore from "better-sqlite3-session-store";
+import SqliteStore from "@bttger/better-sqlite3-session-store";
 
 const Store = SqliteStore(fastifySession);
 const COOKIE_MAX_AGE =
