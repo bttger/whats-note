@@ -1,0 +1,23 @@
+kind: Ingress
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: whatsnote-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: 10m
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  tls:
+    - hosts:
+        - whatsnote.tk
+      secretName: tls-cert-api
+  rules:
+    - host: whatsnote.tk
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: whatsnote-service
+                port:
+                  number: 8080
