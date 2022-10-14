@@ -8,7 +8,7 @@ Send yourself messages, cache your notes, and sync them with all your devices
 
 I have tried numerous note apps but none of them convinced me in the long run. For example, they gave me too much structure, were too bloated, or I couldn't write down random things fast enough. A simple text file that I used like a large cache, on the other hand, worked relatively well. The only problems with this file, however, were that I still tried to separate things structurally with markers and did not synchronise the file between my devices. I resolved the latter by sending myself messages on WhatsApp while away from keyboard, which I then later manually synchronised in the text file.
 
-For a few years now, I've been sending myself messages on WhatsApp with all kinds of things that come to mind, things I have to do, things I should remember and things I want to read later. The advantage is that I can send anything easily and super fast and it is directly synchronised with all devices. However, it's easy to lose track of everything and "tagging" with prefixes and the search function is cumbersome. In addition, WhatsApp or other messengers can be quite distracting. Examples are when you open the web client during an intensive work session because you want to search for a message and are then confronted with new messages from friends, or when you compose a longer message while brainstorming and receive messages.
+For a few years now, I've been sending myself messages on WhatsApp with all kinds of things that come to mind, things I have to do, things I should remember and things I want to read later. The advantage is that I can send anything easily and super fast and it is directly synchronised with all devices. However, it's easy to lose track of things and "tagging" with prefixes and the search function is cumbersome. In addition, WhatsApp or other messengers can be quite distracting. Examples are when you open the web client during an intensive work session because you want to search for a message and are then confronted with new messages from friends, or when you compose a longer message while brainstorming and receive messages.
 
 WhatsNote focuses only on the use case of sending, tagging and checking off messages quickly and distraction-free. In addition, the scratchpads make it easy to collect ideas and organise thoughts.
 </details>
@@ -17,7 +17,7 @@ WhatsNote focuses only on the use case of sending, tagging and checking off mess
 - Tiny, installable, [progressive web app](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps) that works offline
 - Chat with yourself
   - Tag and send a message in one click
-  - Super quickly filter by tag
+  - Super quickly filter messages by tag
   - Check off, edit, or delete messages
   - Hide checked off messages
   - Search messages with a fuzzy search
