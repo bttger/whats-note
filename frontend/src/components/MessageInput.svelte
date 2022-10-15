@@ -89,7 +89,7 @@
 
     const emitEvent = (tagIndex) => {
       dispatch("post-msg", {
-        text: inputEl.innerHTML,
+        text: inputEl.innerHTML.trim(),
         tag: tags[tagIndex],
         checked: false,
       });
