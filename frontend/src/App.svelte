@@ -101,6 +101,15 @@
     if (navigator.onLine) {
       goOnline();
     }
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js").then(
+        () => {},
+        (error) => {
+          console.error(`Service worker registration failed: ${error}`);
+        }
+      );
+    }
   });
 </script>
 
