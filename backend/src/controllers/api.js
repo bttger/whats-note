@@ -94,7 +94,7 @@ async function authenticatedEndpoints(fastify, options) {
     if (!request.session.authenticated) {
       reply.code(401).send(new Error("Please log in"));
     } else if (
-      request.session.issuedAt + options.apiEnv.cookieMaxAge / 2 >
+      request.session.issuedAt + options.apiEnv.cookieMaxAge / 2000 <
       Date.now()
     ) {
       // Renew the cookie's `expires` value
