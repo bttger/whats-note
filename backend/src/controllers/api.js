@@ -177,9 +177,18 @@ async function authenticatedEndpoints(fastify, options) {
       clients.set(accountId, [sessionId]);
     }
     const removeClient = () => {
-      clients.set(
-        accountId,
-        clients.get(accountId).filter((presentId) => presentId !== sessionId)
+      fastify.log.info(
+        { sessionId, clients: Object.fromEntries(clients) },
+        "remove client from SSE"
+      );
+      const connectedClients = clients.get(accountId);
+      const i = connectedClients.indexOf(sessionId);
+      if (i !== -1) {
+        connectedClients.splice(i, 1);
+      }
+      fastify.log.info(
+        { sessionId, clients: Object.fromEntries(clients) },
+        "removed client from SSE"
       );
     };
 
