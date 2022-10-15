@@ -88,17 +88,11 @@ async function authenticatedEndpoints(fastify, options) {
   });
 
   /**
-   * Check if user is logged in and if the cookie needs to be renewed
+   * Check if user is logged in
    */
   fastify.addHook("preHandler", async (request, reply) => {
     if (!request.session.authenticated) {
       reply.code(401).send(new Error("Please log in"));
-    } else if (
-      request.session.issuedAt + options.apiEnv.cookieMaxAge / 2000 <
-      Date.now()
-    ) {
-      // Renew the cookie's `expires` value
-      request.session.touch();
     }
   });
 
