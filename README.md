@@ -45,7 +45,7 @@ The production release of WhatsNote runs in a single Node.js-based Docker contai
 ```
 git clone git@github.com:bttger/whats-note.git
 cd whats-note
-docker build -t whatsnote .
+docker build -t bttger/whatsnote:<tag> .
 docker run --name whatsnote -d -p 8080:8080 -e COOKIE_SECRET=... whatsnote
 ```
 
@@ -55,11 +55,20 @@ The container runs a simple Node.js server without TLS termination. When running
 caddy reverse-proxy --from MY-DOMAIN.xyz --to localhost:8080
 ```
 
+This repository also contains a half-baked Helm chart to deploy a single container to a Kubernetes cluster. I solely created it because I already had a cluster running and wanted to quickly deploy it for some friends. Usually Kubernetes is totally overkill for this app.
+
+```
+# Create a values.local.yaml file in the ~/chart/whats-note directory to save the cookie.secret value
+# Install the chart:
+helm upgrade whatsnote-prod . --install --namespace whatsnote --create-namespace --atomic --timeout 2m -f ./values.local.yaml   
+```
+
 ## Development
 This mono repository contains the backend (Fastify API server) and frontend code (Vite+Svelte SPA). The project uses _npm workspaces_. See [their docs](https://docs.npmjs.com/cli/v8/using-npm/workspaces) for more info about the CLI commands. But don't worry, once the project structure is set up, you don't really need to care about workspaces.
 
 ### Open features
 - e2e encryption (I am not a cryptography expert so help is very welcome. Everything should already be in place, we would just need to implement the encryption and decryption of the `data` field of events.)
+- litestream backups/replication
 - export and import client data as JSON file
 - tabs and tags customization
 - abort editing a message
