@@ -1,5 +1,6 @@
 <script>
   import { createEventDispatcher } from "svelte";
+  import { store } from "../lib/store.js";
 
   const dispatch = createEventDispatcher();
 
@@ -7,6 +8,13 @@
   let email = "";
   let password = "";
   let errorMsg = "";
+
+  async function ensureNoStaleDataInClient(email) {
+    if (window.localStorage.getItem("email") !== email) {
+      await store.deleteClientData();
+    }
+    window.localStorage.setItem("email", email);
+  }
 
   async function loginOrRegisterFetch(login = true) {
     try {
@@ -41,6 +49,7 @@
       isLoading = false;
       return;
     }
+    await ensureNoStaleDataInClient(email);
     dispatch("refresh");
   }
 
@@ -59,6 +68,7 @@
       isLoading = false;
       return;
     }
+    await ensureNoStaleDataInClient(email);
     dispatch("refresh");
   }
 </script>
