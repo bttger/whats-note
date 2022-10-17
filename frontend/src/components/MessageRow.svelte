@@ -5,7 +5,7 @@
   const dispatch = createEventDispatcher();
 
   export let message;
-  let links = message.data.text.match(/https?:\/\/\S+/g) || [];
+  let links = message.data.text.match(/https?:\/\/\S+[^\s,.)?!]/g) || [];
   let messageEl;
   let actionsEl;
 
