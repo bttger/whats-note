@@ -14,8 +14,7 @@
   // Keeps track of the focused tag (or no tag if focusedTag == 0)
   let focusedTag = 0;
 
-  function showTagSelection() {
-    tagSelectionEl.style.display = "flex";
+  function updateTagSelectionPosition() {
     computePosition(sendButtonEl, tagSelectionEl, {
       placement: "top-end",
     }).then(({ x, y }) => {
@@ -24,6 +23,11 @@
         top: `${y - 8}px`,
       });
     });
+  }
+
+  function showTagSelection() {
+    tagSelectionEl.style.display = "flex";
+    updateTagSelectionPosition();
   }
 
   function hideTagSelection() {
@@ -119,7 +123,7 @@
 
 <svelte:window
   on:resize={() => {
-    if (tagSelectionEl.style.display === "flex") showTagSelection();
+    if (tagSelectionEl.style.display === "flex") updateTagSelectionPosition();
   }}
   on:keydown={(e) => {
     if (!document.activeElement.classList.contains("do-not-change-focus")) {
@@ -143,6 +147,7 @@
       if (e.key === "Enter") {
         insertLineBreak();
       }
+      updateTagSelectionPosition();
     }}
     on:focus={showTagSelection}
   />
