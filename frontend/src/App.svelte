@@ -56,7 +56,7 @@
           if (response.ok) {
             await store.finishSendingEvents(unsyncedEvents);
           } else if (response.status === 401) {
-            openPage = 2;
+            location.reload();
           } else {
             console.error(
               `Could not push unsynced data. Status Code: ${response.status}`

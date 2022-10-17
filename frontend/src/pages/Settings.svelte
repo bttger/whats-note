@@ -9,7 +9,7 @@
     try {
       await fetch("/api/logout");
       await store.deleteClientData();
-      dispatch("open-page", 2);
+      location.reload();
     } catch (error) {
       console.error(error);
     }
@@ -21,7 +21,7 @@
     try {
       await fetch("/api/delete-account");
       await store.deleteClientData();
-      dispatch("open-page", 2);
+      location.reload();
     } catch (error) {
       console.error(error);
     }
