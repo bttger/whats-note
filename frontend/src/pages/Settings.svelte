@@ -1,6 +1,7 @@
 <script>
   import { createEventDispatcher } from "svelte";
   import { store } from "../lib/store.js";
+  import InfoIcon from "../components/InfoIcon.svelte";
 
   const dispatch = createEventDispatcher();
 
@@ -33,10 +34,10 @@
   </button>
   <h1>Settings</h1>
   <p class="info">
-    🛈 Do you have ideas on how to improve WhatsNote and would like to
-    participate in the project? Head over to the <a
-      href="https://github.com/bttger/whats-note"
-      target="_blank">GitHub repository</a
+    <InfoIcon /> Do you have ideas on how to improve WhatsNote and would like to
+    participate in the project? Head over to the
+    <a href="https://github.com/bttger/whats-note" target="_blank"
+      >GitHub repository</a
     >.
   </p>
   <p>Message Tags</p>
@@ -54,8 +55,8 @@
   </button>
   {#if askForConfirmation}
     <p class="info">
-      🛈 Are you sure you want to delete your account and all related data? The
-      deletion can not be undone.
+      <InfoIcon /> Are you sure you want to delete your account and all related data?
+      The deletion can not be undone.
     </p>
     <button class="button block" on:click={deleteAccount}>
       I am sure, delete account
