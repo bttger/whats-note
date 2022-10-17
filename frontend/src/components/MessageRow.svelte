@@ -110,6 +110,7 @@
     white-space: pre-wrap;
     display: flex;
     flex-direction: column;
+    font-size: 0.9rem;
   }
 
   .message-info {
