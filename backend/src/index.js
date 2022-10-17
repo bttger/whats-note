@@ -47,9 +47,6 @@ server.register(fastifySession, {
 });
 server.register(apiController, {
   prefix: "/api",
-  apiEnv: {
-    cookieMaxAge: COOKIE_MAX_AGE,
-  },
 });
 
 // Ensure graceful shutdown

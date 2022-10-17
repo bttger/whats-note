@@ -5,7 +5,7 @@ import { EventEmitter } from "node:events";
  * @param {FastifyInstance} fastify  Encapsulated Fastify Instance
  * @param {Object} options plugin options, refer to https://www.fastify.io/docs/latest/Reference/Plugins/#plugin-options
  */
-export default async function apiController(fastify, options) {
+export default async function apiController(fastify) {
   fastify.post("/register", async (request, reply) => {
     const registeredAt = Date.now();
     try {
@@ -55,16 +55,13 @@ export default async function apiController(fastify, options) {
     }
   });
 
-  fastify.register(authenticatedEndpoints, {
-    apiEnv: { cookieMaxAge: options.apiEnv.cookieMaxAge },
-  });
+  fastify.register(authenticatedEndpoints);
 }
 
 /**
  * @param {FastifyInstance} fastify  Encapsulated Fastify Instance
- * @param {Object} options plugin options, refer to https://www.fastify.io/docs/latest/Reference/Plugins/#plugin-options
  */
-async function authenticatedEndpoints(fastify, options) {
+async function authenticatedEndpoints(fastify) {
   const sseEvents = new EventEmitter();
   // Account IDs mapped to session IDs
   const clients = new Map();
