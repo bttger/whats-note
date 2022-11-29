@@ -6,11 +6,11 @@ Send yourself messages, cache your notes, and sync them with all your devices
 
 **Background story**
 
-I have tried numerous note apps but none of them convinced me in the long run. For example, they gave me too much structure, were too bloated, or I couldn't write down random things fast enough. A simple text file that I used like a large cache, on the other hand, worked relatively well. The only problems with this file, however, were that I still tried to separate things structurally with markers and did not synchronise the file between my devices. I resolved the latter by sending myself messages on WhatsApp while away from keyboard, which I then later manually synchronised in the text file.
+I have tried numerous note apps but none of them convinced me in the long run. For example, they gave me too much structure, were too bloated, or I couldn't write down random things fast enough. A simple text file that I used like a large cache, on the other hand, worked relatively well. The only problems with this file, however, were that I still tried to separate things structurally with markers and did not synchronize the file between my devices. I resolved the latter by sending myself messages on WhatsApp while away from keyboard, which I then later manually synchronized in the text file.
 
-For a few years now, I've been sending myself messages on WhatsApp with all kinds of things that come to mind, things I have to do, things I should remember and things I want to read later. The advantage is that I can send anything easily and super fast and it is directly synchronised with all devices. However, it's easy to lose track of things and "tagging" with prefixes and the search function is cumbersome. In addition, WhatsApp or other messengers can be quite distracting. Examples are when you open the web client during an intensive work session because you want to search for a message and are then confronted with new messages from friends, or when you compose a longer message while brainstorming and receive messages.
+For a few years now, I've been sending myself messages on WhatsApp with all kinds of things that come to mind, things I have to do, things I should remember and things I want to read later. The advantage is that I can send anything easily and super fast and it is directly synchronized with all devices. However, it's easy to lose track of things and "tagging" with prefixes and the search function is cumbersome. In addition, WhatsApp or other messengers can be quite distracting. Examples are when you open the web client during work because you want to search for a message and are then confronted with new messages from friends, or when you compose a longer message while brainstorming and then receive messages.
 
-WhatsNote focuses only on the use case of sending, tagging and checking off messages quickly and distraction-free. In addition, the scratchpads make it easy to collect ideas and organise thoughts.
+WhatsNote focuses only on the use case of sending, tagging and checking off messages quickly and distraction-free. In addition, the scratchpads make it easy to collect ideas and organize thoughts.
 </details>
 
 ## Features
@@ -42,7 +42,7 @@ The production release of WhatsNote runs in a single Node.js-based Docker contai
 - COOKIE_SECRET (required and minimum 32 characters long, `string`, to sign the cookie)
 
 ### Build and run the production container
-```
+```bash
 git clone git@github.com:bttger/whats-note.git
 cd whats-note
 docker build -t bttger/whatsnote:<tag> .
@@ -51,13 +51,13 @@ docker run --name whatsnote -d -p 8080:8080 -e COOKIE_SECRET=... whatsnote
 
 The container runs a simple Node.js server without TLS termination. When running it in production, you should always run a TLS termination proxy in front of it to encrypt the communication between client and server. Look into [Certbot](https://certbot.eff.org/), [Caddy](https://caddyserver.com/docs/getting-started), or other tools that provide simple TLS termination. The following command starts a Caddy proxy which automatically provisions a TLS certificate to encrypt traffic. But keep in mind that you need to open port 80 and 443, and you need to link your public domain name to the IP address of your server.
 
-```
+```bash
 caddy reverse-proxy --from MY-DOMAIN.xyz --to localhost:8080
 ```
 
 This repository also contains a half-baked Helm chart to deploy a single container to a Kubernetes cluster. I solely created it because I already had a cluster running and wanted to quickly deploy it for some friends. Usually Kubernetes is totally overkill for this app.
 
-```
+```bash
 # Create a values.local.yaml file in the ~/chart/whats-note directory to save the cookie.secret value
 # Install the chart:
 helm upgrade whatsnote-prod . --install --namespace whatsnote --create-namespace --atomic --timeout 2m -f ./values.local.yaml   
@@ -91,7 +91,7 @@ Run `npm outdated` or `npm update --workspaces --dry-run` to check which updates
 
 ### Run the API server
 
-```
+```bash
 # Set the environment variables before starting the server
 COOKIE_SECRET=xxx node backend/src/index.js
 
@@ -102,14 +102,14 @@ npm run start --workspace backend
 
 ### Run the Vite dev server
 
-```
+```bash
 npm run dev --workspace frontend
 ```
 
 ### Run a reverse proxy
 To prevent CORS errors, you must run the API and vite dev server under the same host. This repository contains a simple Caddyfile with the right reverse proxy configuration for local development.
 
-```
+```bash
 docker run --rm --network host --name caddy -v $PWD/Caddyfile:/etc/caddy/Caddyfile caddy
 ```
 
@@ -118,7 +118,7 @@ Now with the backend, frontend, and reverse proxy running, you can start develop
 ### Build the SPA
 The following command builds all artifacts and saves them in the `./frontend/dist` directory.
 
-```
+```bash
 npm run build -w frontend
 ```
 
