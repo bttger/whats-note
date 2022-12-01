@@ -90,6 +90,7 @@
       on:check-msg={(e) => checkMsg(e.detail)}
       on:edit-msg={(e) => editMsg(e.detail)}
       on:delete-msg={(e) => deleteMsg(e.detail)}
+      isLast={message.id === shownMessages[shownMessages.length - 1].id}
     />
   {/each}
   <div id="message-container-end" style="height: 1px; margin-top: -1px" />

@@ -5,6 +5,7 @@
   const dispatch = createEventDispatcher();
 
   export let message;
+  export let isLast;
   let links = message.data.text.match(/https?:\/\/\S+[^\s,.)?!]/g) || [];
   let messageEl;
   let actionsEl;
@@ -36,7 +37,7 @@
   }
 </script>
 
-<div class="message-row">
+<div class="message-row" style="margin-bottom: {isLast ? '0' : '0.5rem'};">
   <input
     aria-label="Check off the message"
     type="checkbox"
@@ -97,7 +98,8 @@
 <style>
   .message-row {
     display: flex;
-    margin: 0 0.5rem 0.5rem 0.5rem;
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
     gap: 1rem;
     justify-content: space-between;
   }
