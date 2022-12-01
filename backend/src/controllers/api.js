@@ -106,7 +106,7 @@ async function authenticatedEndpoints(fastify) {
         }
         fastify.db
           .prepare(
-            `INSERT INTO events (id, item_id, emitted_at, type, data, received_at, from_account)
+            `INSERT OR IGNORE INTO events (id, item_id, emitted_at, type, data, received_at, from_account)
             VALUES (?, ?, ?, ?, ?, ?, ?)`
           )
           .run(
