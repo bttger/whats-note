@@ -17,8 +17,13 @@
   }
 
   async function loginOrRegisterFetch(login = true) {
+    if (!email || !password) {
+      return "Please enter an email and password";
+    }
+
+    const url = login ? "/api/login" : "/api/register";
     try {
-      const response = await fetch(`/api/${login ? "login" : "register"}`, {
+      const response = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
