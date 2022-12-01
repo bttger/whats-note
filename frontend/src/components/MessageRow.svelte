@@ -1,5 +1,5 @@
 <script>
-  import { createEventDispatcher } from "svelte";
+  import { createEventDispatcher, tick } from "svelte";
   import { computePosition, flip } from "@floating-ui/dom";
 
   const dispatch = createEventDispatcher();
@@ -13,10 +13,10 @@
     dispatch("check-msg", { message, checked: event.target.checked });
   }
 
-  function showMessageActions() {
+  async function showMessageActions() {
     actionsEl.style.display = "flex";
     computePosition(messageEl, actionsEl, {
-      placement: "top",
+      placement: "bottom",
       middleware: [flip()],
     }).then(({ x, y }) => {
       Object.assign(actionsEl.style, {
@@ -24,21 +24,26 @@
         top: `${y}px`,
       });
     });
+
+    await new Promise((r) => setTimeout(r, 50));
+    window.addEventListener("click", hideMessageActions);
   }
 
   function hideMessageActions() {
+    console.log("hide");
     actionsEl.style.display = "";
+    window.removeEventListener("click", hideMessageActions);
   }
 </script>
 
 <div class="message-row">
   <input
-    :id="'msg-checkbox-' + message.id"
     aria-label="Check off the message"
     type="checkbox"
     checked={message.data.checked}
     on:change={(e) => checkOffMsg(e)}
   />
+  <!-- svelte-ignore a11y-click-events-have-key-events -->
   <div
     bind:this={messageEl}
     class="message"
@@ -51,14 +56,11 @@
       : message.data.checked
       ? "filter: brightness(0.5);"
       : ""}
-    on:click={() =>
-      actionsEl.style.display === "flex"
-        ? hideMessageActions()
-        : showMessageActions()}
+    on:click={showMessageActions}
   >
     <div>
       {#each links as link}
-        <a href={link} target="_blank" class="block">{link}</a>
+        <a href={link} target="_blank noreferrer" class="block">{link}</a>
       {/each}{message.data.text}
     </div>
     <span class="message-info">
@@ -76,7 +78,6 @@
     <button
       class="button"
       on:click={() => {
-        hideMessageActions();
         dispatch("edit-msg", message);
       }}
     >
@@ -85,7 +86,6 @@
     <button
       class="button"
       on:click={() => {
-        hideMessageActions();
         dispatch("delete-msg", message);
       }}
     >
@@ -126,5 +126,7 @@
     gap: 0.5rem;
     padding: 0.5rem;
     z-index: 50;
+    box-shadow: 0 20px 20px -5px rgb(0 0 0 / 0.35);
+    border-radius: 0.2rem;
   }
 </style>
