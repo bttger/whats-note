@@ -1,7 +1,6 @@
 <script>
   import { createEventDispatcher, onMount } from "svelte";
   import { pasteAsPlainText, insertLineBreak } from "../lib/utils.js";
-  import { computePosition } from "@floating-ui/dom";
   import { store } from "../lib/store.js";
 
   const dispatch = createEventDispatcher();
@@ -14,20 +13,8 @@
   // Keeps track of the focused tag (or no tag if focusedTag == 0)
   let focusedTag = 0;
 
-  function updateTagSelectionPosition() {
-    computePosition(sendButtonEl, tagSelectionEl, {
-      placement: "top-end",
-    }).then(({ x, y }) => {
-      Object.assign(tagSelectionEl.style, {
-        left: `${x}px`,
-        top: `${y - 8}px`,
-      });
-    });
-  }
-
   function showTagSelection() {
     tagSelectionEl.style.display = "flex";
-    updateTagSelectionPosition();
   }
 
   function hideTagSelection() {
@@ -122,11 +109,8 @@
 </script>
 
 <svelte:window
-  on:resize={() => {
-    if (tagSelectionEl.style.display === "flex") updateTagSelectionPosition();
-  }}
   on:keydown={(e) => {
-    if (!document.activeElement.classList.contains("do-not-change-focus")) {
+    if (!document.activeElement.classList.contains("input-div")) {
       if (e.key.length === 1 && e.key.match(/[a-z0-9öäü]/i)) {
         focusInputField();
       }
@@ -138,61 +122,70 @@
 />
 
 <div class="message-input" on:focusout={checkHidingTagButtons}>
-  <div
-    bind:this={inputEl}
-    class="do-not-change-focus input-div show-tag-buttons"
-    contenteditable="true"
-    on:paste={(e) => pasteAsPlainText(e)}
-    on:keydown={(e) => {
-      if (e.key === "Enter") {
-        insertLineBreak();
-      }
-      updateTagSelectionPosition();
-    }}
-    on:focus={showTagSelection}
-  />
+  <div bind:this={tagSelectionEl} class="tag-selection">
+    {#each tags as tag, index (tag.id)}
+      <button
+        id="msg-tag-{tag.id}"
+        data-tag-index={index}
+        class="button tag-button show-tag-buttons"
+        style="background-color: {tag.color}"
+        on:keydown={moveSendButtonFocus}
+        on:keyup={(e) => {
+          if (e.key === "Enter") {
+            postMessage(e);
+          }
+        }}
+      >
+        {tag.name}
+      </button>
+    {/each}
+  </div>
+  <div class="input-row">
+    <div
+      bind:this={inputEl}
+      class="input-div show-tag-buttons"
+      contenteditable="true"
+      on:paste={(e) => pasteAsPlainText(e)}
+      on:keydown={(e) => {
+        if (e.key === "Enter") {
+          insertLineBreak();
+        }
+      }}
+      on:focus={showTagSelection}
+    />
 
-  <button
-    bind:this={sendButtonEl}
-    class="button show-tag-buttons"
-    on:click={(e) => {
-      postMessage(e);
-    }}
-    on:keyup={(e) => {
-      if (e.key === "Enter") {
+    <button
+      bind:this={sendButtonEl}
+      class="button show-tag-buttons"
+      on:click={(e) => {
         postMessage(e);
-      }
-    }}
-    on:keydown={moveSendButtonFocus}
-  >
-    <span>
-      {#if messageBeingEdited}
-        ed.
-      {:else}
-        &gt;
-      {/if}
-    </span>
-
-    <div bind:this={tagSelectionEl} class="tag-selection">
-      {#each tags as tag, index (tag.id)}
-        <button
-          id="msg-tag-{tag.id}"
-          data-tag-index={index}
-          class="button tag-button show-tag-buttons"
-          style="background-color: {tag.color}"
-        >
-          {tag.name}
-        </button>
-      {/each}
-    </div>
-  </button>
+      }}
+      on:keyup={(e) => {
+        if (e.key === "Enter") {
+          postMessage(e);
+        }
+      }}
+      on:keydown={moveSendButtonFocus}
+    >
+      <span>
+        {#if messageBeingEdited}
+          ed.
+        {:else}
+          &gt;
+        {/if}
+      </span>
+    </button>
+  </div>
 </div>
 
 <style>
   .message-input {
+    margin: 0 0.5rem 0.5rem 0.5rem;
+  }
+
+  .input-row {
     display: flex;
     gap: 0.5rem;
-    margin: 0.5rem;
   }
 
   .input-div {
@@ -214,10 +207,9 @@
   }
 
   .tag-selection {
-    position: absolute;
-    top: 0;
-    left: 0;
     display: none;
     gap: 0.5rem;
+    justify-content: flex-end;
+    margin-bottom: 0.5rem;
   }
 </style>
