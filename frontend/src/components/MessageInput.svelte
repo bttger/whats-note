@@ -74,7 +74,7 @@
   }
 
   function postMessage(event) {
-    if (!inputEl.innerHTML) {
+    if (!inputEl.innerHTML.trim()) {
       return;
     }
 
@@ -135,6 +135,9 @@
             postMessage(e);
           }
         }}
+        on:click={(e) => {
+          postMessage(e);
+        }}
       >
         {tag.name}
       </button>
@@ -157,15 +160,15 @@
     <button
       bind:this={sendButtonEl}
       class="button show-tag-buttons"
-      on:click={(e) => {
-        postMessage(e);
-      }}
+      on:keydown={moveSendButtonFocus}
       on:keyup={(e) => {
         if (e.key === "Enter") {
           postMessage(e);
         }
       }}
-      on:keydown={moveSendButtonFocus}
+      on:click={(e) => {
+        postMessage(e);
+      }}
     >
       <span>
         {#if messageBeingEdited}
