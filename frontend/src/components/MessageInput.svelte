@@ -111,7 +111,7 @@
 <svelte:window
   on:keydown={(e) => {
     if (!document.activeElement.classList.contains("input-div")) {
-      if (e.key.length === 1 && e.key.match(/[a-z0-9öäü]/i)) {
+      if (e.key.length === 1 && e.key.match(/[a-z0-9öäü]/i) && !e.ctrlKey) {
         focusInputField();
       }
       if (e.code === "Space" && e.ctrlKey) {
