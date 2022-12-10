@@ -26,7 +26,6 @@ WhatsNote focuses on the use case of sending, tagging and checking off messages 
   - Search messages with a fuzzy search
 - Quickly organize your thoughts in plain text scratchpads
 - Live sync with all your devices
-- No distractions - only pure functionality
 
 ## Shortcuts
 
@@ -76,19 +75,23 @@ This mono repository contains the backend (Fastify API server) and frontend code
 ### Open features
 
 - e2e encryption (I am not a cryptography expert so help is very welcome. Everything should already be in place, we would just need to implement the encryption and decryption of the `data` field of events.)
-- litestream backups/replication
 - export and import client data as JSON file
 - tabs and tags customization
 - abort editing a message
 - send photo
 - send file
 - send audio message
-- fastify request and response validation
-- tests
 - remind me notifications
 - link title previews (would imply privacy issues because of the PWA nature)
 - state bar (not sure about this one, maybe show some visual state if there are events unsynced or if it is disconnected)
 - UI design overhaul
+- markdown input with preview for each token that is not actively edited (like Obsidian and [Silver Bullet](https://github.com/silverbulletmd/silverbullet))
+
+### Open dev/ops features
+
+- litestream backups/replication
+- fastify request and response validation
+- automated tests
 
 ### Install the dependencies
 
@@ -117,7 +120,7 @@ npm run dev --workspace frontend
 
 ### Run a reverse proxy
 
-To prevent CORS errors, you must run the API and vite dev server under the same host. This repository contains a simple Caddyfile with a reverse proxy configuration for local development.
+To prevent CORS errors, you must run the API and vite dev server under the same host. This repository contains a simple [Caddyfile](Caddyfile) with a reverse proxy configuration for local development.
 
 ```bash
 docker run --rm --network host --name caddy --volume $PWD/Caddyfile:/etc/caddy/Caddyfile:ro caddy
