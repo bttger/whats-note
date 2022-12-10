@@ -34,19 +34,26 @@
   </button>
   <h1>Settings</h1>
   <p class="info">
-    <InfoIcon /> Do you have ideas on how to improve WhatsNote and would like to
-    participate in the project? Head over to the
-    <a href="https://github.com/bttger/whats-note" target="_blank"
-      >GitHub repository</a
-    >.
+    <InfoIcon /> Do you have ideas on how to improve WhatsNote? Head over to the
+    <a
+      href="https://github.com/bttger/whats-note"
+      target="_blank"
+      rel="noopener noreferrer">GitHub repository</a
+    > and create an issue.
   </p>
   <p>Message Tags</p>
+  <p class="info-text">
+    The tag and tab customization is an open feature. Head over to the <a
+      href="https://github.com/bttger/whats-note"
+      target="_blank"
+      rel="noopener noreferrer">GitHub repository</a
+    > and help implementing it.
+  </p>
   <!-- Keep in mind that filtering works by the tag ID. If you change the title
   of a tag, the chat window will still show you older messages with the old tag
   name when you filter for the new tag name. -->
   <p>Number of Scratchpads</p>
   <hr />
-  <!-- TODO insert links to github repo and how to involve in the project or suggest improvements -->
   <button class="button block" style="margin-bottom: 0.5rem" on:click={logout}>
     Log out
   </button>
@@ -85,5 +92,9 @@
   button {
     font-size: 1rem;
     width: 100%;
+  }
+
+  .info-text {
+    color: rgb(147, 147, 147);
   }
 </style>
