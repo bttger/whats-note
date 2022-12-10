@@ -59,7 +59,7 @@
       : ""}
     on:click={showMessageActions}
   >
-    <div>
+    <div class="break-content">
       {#each links as link}
         <a href={link} target="_blank noreferrer" class="block">{link}</a>
       {/each}{message.data.text}
@@ -106,17 +106,20 @@
 
   .message {
     background: #2c2c2c;
-    color: #e3e3e3;
     padding: 0.2rem 0.4rem 0.2rem 0.4rem;
     border-radius: 0.2rem;
-    white-space: pre-wrap;
     display: flex;
     flex-direction: column;
     font-size: 0.9rem;
   }
 
+  .break-content {
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
   .message-info {
-    color: #ababab;
+    color: #a2a2a2;
     font-size: 0.7rem;
     align-self: end;
   }
