@@ -1,12 +1,11 @@
 <script>
-  import { createEventDispatcher, tick } from "svelte";
+  import { createEventDispatcher } from "svelte";
   import { computePosition, flip } from "@floating-ui/dom";
 
   const dispatch = createEventDispatcher();
 
   export let message;
   export let isLast;
-  let links = message.data.text.match(/https?:\/\/\S+[^\s,.)?!]/g) || [];
   let messageEl;
   let actionsEl;
 
@@ -31,7 +30,6 @@
   }
 
   function hideMessageActions() {
-    console.log("hide");
     actionsEl.style.display = "";
     window.removeEventListener("click", hideMessageActions);
   }
@@ -60,9 +58,7 @@
     on:click={showMessageActions}
   >
     <div class="break-content">
-      {#each links as link}
-        <a href={link} target="_blank noreferrer" class="block">{link}</a>
-      {/each}{message.data.text}
+      {@html message.data.text}
     </div>
     <span class="message-info">
       {new Date(message.sentAt).toLocaleString() +

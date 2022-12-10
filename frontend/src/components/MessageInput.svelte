@@ -79,8 +79,17 @@
     }
 
     const emitEvent = (tagIndex) => {
+      let text = inputEl.innerHTML.trim();
+
+      // Replace every matched regex with an emoji
+      text = text.replace(
+        /https?:\/\/\S+[^\s,.)?!]/gm,
+        (match) =>
+          `<a href="${match}" target="_blank" rel="noopener noreferrer">${match}</a>`
+      );
+
       dispatch("post-msg", {
-        text: inputEl.innerHTML.trim(),
+        text,
         tag: tags[tagIndex],
         checked: false,
       });
@@ -214,5 +223,9 @@
     gap: 0.5rem;
     justify-content: flex-end;
     margin-bottom: 0.5rem;
+  }
+
+  .input-div :global(a) {
+    color: #2f1be5;
   }
 </style>
