@@ -4,7 +4,7 @@
   line-height: 1.2;
   font-weight: 400;
 
-  color: rgba(255, 255, 255, 0.9);
+  color: #dddddd;
   background-color: black;
 
   font-synthesis: none;
@@ -15,7 +15,7 @@
 }
 
 a {
-  color: rgba(255, 255, 255, 0.9);
+  color: #dddddd;
 }
 
 body {
@@ -58,5 +58,5 @@ input[type="checkbox"] {
 
 .tag-button {
   padding: 0 0.2rem 0 0.2rem;
-  color: #e3e3e3;
+  color: #dddddd;
 }

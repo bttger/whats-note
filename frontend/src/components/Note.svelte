@@ -73,7 +73,6 @@
 <style>
   .note {
     height: 100%;
-    color: #e3e3e3;
     box-sizing: border-box;
     padding: 0 0.5rem 0.5rem 0.5rem;
     overflow: auto;
@@ -91,6 +90,5 @@
 
   .note-info {
     font-size: 0.7rem;
-    color: #e3e3e3;
   }
 </style>
