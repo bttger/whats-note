@@ -122,6 +122,14 @@ export async function selectMessages(db, count, filter) {
 
 async function updateMessage(db, id, partialMessageDataObj) {
   let message = await db.get("messages", id);
+  if (!message) {
+    console.log(
+      "[idb.js:updateMessage] Could not update message: message not found",
+      id,
+      partialMessageDataObj
+    );
+    return;
+  }
   message.data = { ...message.data, ...partialMessageDataObj };
   if (message.data.checked) {
     delete message.unchecked;
